@@ -31,7 +31,9 @@ Update the catalog or locus definition with supporting evidence. New names can e
 
 Navigation is local state and works on a static host. Shared pairings live in a URL fragment, not a query sent to a backend. Imported data is parsed through a strict schema before use. React escapes text; no user-controlled HTML is rendered. Genotype notes and unknown labels never execute as code.
 
-The app uses system fonts, original inline vector illustrations, and bundled icons. No runtime asset CDN is required. Tailwind’s Vite integration and semantic component styles form the UI. Motion respects reduced-motion preferences.
+The app uses system fonts, original cartoon WebP illustrations, and bundled icons. `appearance.ts` maps expressed genotypes to separate body-color, body-pattern, eye, head, and tail features. Parent/library appearance descriptors are distinct from inferred offspring genetics. Carrier states never become visible art traits. `MorphIllustration` selects an actual pattern asset, while `CartoonEyes` modifies only the eye region; local head and tail features remain separate. Illustrations remain explicitly non-predictive. No runtime asset CDN is required. Tailwind’s Vite integration and semantic component styles form the UI. Motion respects reduced-motion preferences.
+
+`catalog-index.ts` extends the naming catalog with breeder, marketplace, pattern, eye, and unverified entries without creating new Mendelian loci. The library paginates entries and filters categories and sources. Bojoneroko remains an unverified trade-line record; Pied/Super Pied do not acquire a fabricated Pied locus.
 
 ## Validation and delivery
 

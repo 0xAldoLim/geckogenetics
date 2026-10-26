@@ -31,6 +31,12 @@ Research compared the requested sources with breeder-originator documentation, a
 - **Enigma:** inspected Bargen’s 2013 breeder account. It explicitly describes hypotheses and a need for further testing. No speculative neurological mechanism, homozygous lethality, incidence, or diagnosis is adopted.
 - **Expanded names:** inspected Ron Tremper’s BAE, historical Giant, and Pastel pages, Geckos Etc.’s morph catalog, Geckoverse, and MorphMarket’s community masterlist. The Morphpedia index exposed only a shell; indexed entries and the inspectable Bell article supplemented it. The community list is evidence of naming conventions and disagreements, not controlled genetics proof.
 
+## Expanded naming index and marketplace checks
+
+The index was expanded using the requested [Leopard Geckos London masterlist](https://www.leopardgeckoslondon.com/post/leopard-gecko-morph-masterlist), current breeder inventories, and seller-authored MorphMarket records. The masterlist is a breeder visual reference, not molecular proof; its blanket health claims are not adopted as established incidence. MorphMarket, Geckos Etc., B&M Gecko, OnlineGeckos, GwenGecko and HypeGecko were examined for names and project usage. B&M's separate Genetic Library page was only a coming-soon page, so it was not treated as genetics evidence.
+
+Pied is recorded as a pattern descriptor; a cited Pied Galaxy listing separately documents Super Snow and Eclipse. Super Pied is present in HypeGecko's public inventory, but the word Super does not establish an independent homozygous state. Dark Tangerine is independently documented in London and OnlineGeckos breeder listings; it is not automatically Black Night. Bojoneroko was searched with alternative spacing and marketplace/social queries. Only mirrored public sales text was found, so its breeder origin, unique appearance and genetics remain unverified. No associated SHTCTB, Sunglow or Tremper claim is imported into the bare name. Marketplace prices and seller contact details are not copied into the catalog. Availability changes; this is a dated index, not a live shopping feed or an exhaustive claim about every trade name.
+
 ## Locus and allele relationships
 
 The app’s identifiers are **model identifiers**, not genome coordinates. A zero/one/two-copy model does not assert that a causal mutation has been isolated. Different letters can refer to different loci; identical letters in informal breeder notation do not establish allelism.

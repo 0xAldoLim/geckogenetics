@@ -4,14 +4,15 @@
 
 Explore what a leopard gecko pairing could produce—and understand why. GeckoGenetics brings offspring probabilities, hidden carrier genetics, and the story behind each trait into one friendly calculator.
 
-![GeckoGenetics calculator with parent illustrations and offspring probabilities](docs/images/calculator.png)
+![GeckoGenetics with recognizable cartoon leopard geckos and offspring probabilities](docs/images/cartoon-calculator.png)
 
 ## Meet your next discovery
 
 - **Pair two geckos.** Search familiar morph names or enter documented genotypes, hidden traits, and possible hets.
 - **See the possibilities.** Explore offspring cards, a probability chart, and an interactive Punnett square. Switch between appearance and genotype views without losing carrier information.
 - **Understand the color story.** Keep Tangerine, Super Hypo, Carrot Tail, and other selected breeding lines separate from single-gene inheritance.
-- **Learn as you go.** Browse 78 sourced morph and breeding-line entries and a plain-English genetics guide, including uncertain and disputed morphs.
+- **Learn as you go.** Browse 196 indexed morph, pattern, eye-trait, breeding-line, and marketplace names. Filter by trait or source, including the Leopard Geckos London masterlist and marketplace records. Newer names such as Pied, Super Pied, Dark Tangerine, and Bojoneroko are searchable with their evidence status.
+- **See the actual feature change.** Cartoon guides use separate body, pattern, and eye features: Eclipse changes the eyes, Pied changes white patches, stripes change the markings, and hidden carrier genes do not change the drawing.
 - **Keep a pairing handy.** Save up to 20 pairings in your browser, share a pairing link, or copy results with their assumptions.
 
 No accounts, subscriptions, database, or AI services. Calculations run on your device.
@@ -35,7 +36,7 @@ Percentages describe the chance for **each egg**, not a guaranteed clutch. Predi
 
 A normal appearance cannot rule out hidden recessive alleles. Unspecified genotypes stay unknown. “66.67% possible het” means a two-thirds chance of being a carrier under the stated parentage; it does not mean two-thirds of an allele. The calculator distinguishes an exact 2/3 from a literal 66% estimate.
 
-The library includes breeding lines, combination names, and disputed traits beyond the supported calculation model. It does not claim to identify every trade name or infer an animal’s genotype from its photograph. Ambiguous shorthand such as `MSEBN H T` and `SP PH T` is preserved for clarification. Recognized expansions are shown before you confirm them.
+The library includes breeding lines, combination names, and disputed traits beyond the supported calculation model. Its index draws on breeder references and marketplace listings; a marketplace label is evidence of naming, not proof of a new gene. No finite search can establish every trade name, and this index does not infer an animal’s genotype from its photograph. Pied/Super Pied are pattern descriptions with no invented expression percentages. Bojoneroko is indexed as an unverified trade line because primary originator genetics documentation was not located. Ambiguous shorthand such as `MSEBN H T` and `SP PH T` is preserved for clarification. Recognized expansions are shown before you confirm them.
 
 Lemon Frost and Enigma trigger welfare information and withheld predictions, including recognized Enigma combination names. No offspring sex, survival, fertility, health, or inbreeding coefficient is predicted. See the [evidence and source limitations](docs/GENETICS_REFERENCES.md) and [calculation assumptions](docs/ASSUMPTIONS.md).
 
@@ -74,5 +75,6 @@ Built with React, strict TypeScript, Vite, Tailwind CSS, Vitest, and Playwright.
 - [Genetics catalog, evidence, and references](docs/GENETICS_REFERENCES.md)
 - [Assumptions and limitations](docs/ASSUMPTIONS.md)
 - [Illustration and dependency attribution](docs/ATTRIBUTION.md)
+- [Cartoon artwork prompts and feature mapping](docs/ARTWORK.md)
 
 Found a missing morph or a genetics correction? [Open an issue](https://github.com/0xAldoLim/geckogenetics/issues) with the name, original breeder records or research, and any relevant welfare evidence. New catalog entries do not automatically become independent modeled genes.

@@ -16,7 +16,8 @@ import {
   genotypeText,
 } from '../genetics/inference'
 import { percent, roundedPercentages, sum } from '../genetics/probability'
-import MorphIllustration, { appearanceFor } from './MorphIllustration'
+import MorphIllustration from './MorphIllustration'
+import { appearanceFromGenotypes } from '../genetics/appearance'
 import PunnettSquare from './PunnettSquare'
 const colors = [
   '#d7b55b',
@@ -234,7 +235,11 @@ export default function Results({
                   <span className="outcome-number">
                     POSSIBILITY {String(i + 1).padStart(2, '0')}
                   </span>
-                  <MorphIllustration appearance={appearanceFor(g.title)} />
+                  <MorphIllustration
+                    appearance={appearanceFromGenotypes(
+                      g.outcomes[0].genotypes,
+                    )}
+                  />
                   <span
                     className="probability-badge"
                     style={{ borderColor: colors[i % colors.length] }}

@@ -2608,3 +2608,83 @@ footer small {
   border-style: dashed;
   color: #56664e;
 }
+
+/* Matching cartoon cutouts with independent eye and body-pattern layers. */
+.cartoon-art {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+  isolation: isolate;
+}
+.cartoon-frame {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+.cartoon-flipped {
+  transform: scaleX(-1);
+}
+.cartoon-gecko,
+.cartoon-eyes,
+.cartoon-modifiers {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+}
+.cartoon-gecko {
+  display: block;
+}
+.cartoon-eyes {
+  z-index: 3;
+}
+.cartoon-modifiers {
+  z-index: 2;
+  overflow: visible;
+}
+.specimen-stage .gecko-art,
+.offspring-art .gecko-art {
+  transform: none;
+  padding: 5px 8px;
+}
+.specimen-stage {
+  height: 245px;
+}
+.offspring-art {
+  height: 210px;
+}
+.library-art {
+  height: 180px;
+}
+@media (max-width: 760px) {
+  .specimen-stage {
+    height: 220px;
+  }
+  .offspring-art {
+    height: 235px;
+  }
+  .library-art {
+    height: 200px;
+  }
+  .specimen-stage .gecko-art,
+  .offspring-art .gecko-art {
+    transform: none;
+  }
+}
+
+.catalog-note {
+  font-size: 12px;
+  line-height: 1.7;
+  color: #56664e;
+  margin: 10px 0 20px;
+  max-width: 900px;
+}
+.library-controls {
+  flex-wrap: wrap;
+}
+.library-controls .search-input {
+  min-width: 240px;
+}

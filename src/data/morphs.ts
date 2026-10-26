@@ -1,7 +1,9 @@
-import { blankParent, known } from '../genetics/traits'
+import { blankParent, known, traits } from '../genetics/traits'
 import type { Genotype, LineTrait, Pairing, Parent } from '../genetics/traits'
 import type { ReferenceId } from './references'
+import { indexedMorphs } from './catalog-index'
 export interface Morph {
+  category?: 'line' | 'pattern' | 'eye' | 'combination' | 'unverified'
   name: string
   aliases: string[]
   loci?: Record<string, Genotype>
@@ -444,6 +446,53 @@ export const morphs: Morph[] = [
     refs: ['masterlist', 'enigma'],
   },
 ]
+const indexedNames = new Set(morphs.map((m) => m.name.toLowerCase()))
+for (const entry of indexedMorphs) {
+  if (!indexedNames.has(entry.name.toLowerCase())) {
+    morphs.push(entry)
+    indexedNames.add(entry.name.toLowerCase())
+  }
+}
+const londonIndex = new Set([
+  'White & Yellow',
+  'Enigma',
+  'Lemon Frost',
+  'Ghost',
+  'Pastel',
+  'Mack Snow',
+  'Super Snow',
+  'Giant',
+  'Super Giant',
+  'Eclipse',
+  'Noir Desir Black Eye',
+  'Marble Eye',
+  'Blizzard',
+  'Murphy Patternless',
+  'Tremper Albino',
+  'Bell Albino',
+  'Rainwater Albino',
+  'Normal / Wild Type',
+  'Bold Stripe',
+  'Hypo',
+  'Super Hypo',
+  'Baldy',
+  'Carrot Tail',
+  'Tangerine',
+  'Black Night',
+  'Black Pearl',
+])
+for (const morph of morphs)
+  if (londonIndex.has(morph.name))
+    morph.refs = [
+      ...new Set<ReferenceId>([
+        ...(morph.refs ??
+          traits
+            .filter((t) => t.id in (morph.loci ?? {}))
+            .flatMap((t) => t.refs)),
+        'london',
+      ]),
+    ]
+
 export function applyMorph(parent: Parent, morph: Morph): Parent {
   return {
     ...parent,
@@ -459,7 +508,12 @@ export function applyMorph(parent: Parent, morph: Morph): Parent {
       ...(morph.risk
         ? [morph.risk === 'frost' ? 'Lemon Frost' : 'Enigma']
         : []),
-      ...(!morph.loci || morph.ambiguous ? [morph.name] : []),
+      ...(!morph.loci ||
+      morph.ambiguous ||
+      morph.category === 'pattern' ||
+      /pied/i.test(morph.name)
+        ? [morph.name]
+        : []),
     ],
   }
 }

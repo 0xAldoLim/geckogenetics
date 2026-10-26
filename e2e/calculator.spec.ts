@@ -249,3 +249,107 @@ test('learning flow, result copy and keyboard access work', async ({
   await page.keyboard.press('Tab')
   await expect(page.locator(':focus')).toBeVisible()
 })
+
+test('new index names are searchable and eye/pattern artwork changes the right features', async ({
+  page,
+}, testInfo) => {
+  await page.goto('/')
+  const toggle = page.getByRole('button', { name: 'Toggle navigation' })
+  if (await toggle.isVisible()) await toggle.click()
+  await page.getByRole('button', { name: 'Morph library', exact: true }).click()
+  const search = page.getByLabel('Search morph library')
+  const card = (name: string) =>
+    page
+      .locator('.library-card')
+      .filter({ has: page.getByRole('heading', { name, exact: true }) })
+  for (const name of ['Pied', 'Super Pied', 'Bojoneroko', 'Dark Tangerine']) {
+    await search.fill(name)
+    await expect(card(name)).toBeVisible()
+  }
+  await expect(card('Dark Tangerine')).toContainText(
+    /not automatically Black Night/i,
+  )
+  await search.fill('Bojoneroko')
+  await expect(card('Bojoneroko')).toContainText('unverified')
+  await search.fill('Pied')
+  await expect(card('Pied').locator('.cartoon-art')).toHaveAttribute(
+    'data-pattern',
+    'pied',
+  )
+  await expect(card('Super Pied').locator('img.cartoon-gecko')).toHaveAttribute(
+    'src',
+    /super-pied\.webp$/,
+  )
+  await search.fill('Eclipse')
+  await expect(card('Eclipse').locator('.cartoon-art')).toHaveAttribute(
+    'data-eyes',
+    'solid-black',
+  )
+  await search.fill('Marble Eye')
+  await expect(card('Marble Eye').locator('.cartoon-art')).toHaveAttribute(
+    'data-eyes',
+    'marbled',
+  )
+  await expect(card('Marble Eye').locator('.cartoon-art')).toHaveAttribute(
+    'data-body',
+    'normal',
+  )
+  await search.fill('')
+  await page.getByLabel('Filter morph category').selectOption('eyes')
+  await page.screenshot({
+    path: `test-results/${testInfo.project.name}-eye-traits.png`,
+    fullPage: true,
+  })
+  await page.getByLabel('Filter morph category').selectOption('patterns')
+  await page.screenshot({
+    path: `test-results/${testInfo.project.name}-pattern-traits.png`,
+    fullPage: true,
+  })
+  await page.getByLabel('Filter morph category').selectOption('all')
+  await page.getByLabel('Filter catalog source').selectOption('marketplace')
+  await search.fill('Dark Tangerine')
+  await expect(card('Dark Tangerine')).toBeVisible()
+})
+
+test('hidden albino carriers retain a normal illustration', async ({
+  page,
+}) => {
+  await page.goto('/')
+  await page.getByLabel('Educational pairing preset').selectOption('sunglow-a')
+  const offspring = page.locator('.offspring-card .cartoon-art')
+  await expect(offspring).toHaveAttribute('data-body', 'normal')
+  await expect(offspring).toHaveAttribute('data-eyes', 'slit')
+  await expect(offspring.locator('img')).toHaveJSProperty('complete', true)
+  await expect(offspring.locator('img')).not.toHaveJSProperty('naturalWidth', 0)
+})
+
+test('parent controls preserve eye patterns and apply selected body markings', async ({
+  page,
+}) => {
+  await page.goto('/')
+  const sire = page.getByRole('region', { name: 'Sire parent' })
+  const art = sire.locator('.cartoon-art')
+  const search = sire.getByLabel('Sire morph search')
+  await search.fill('Marble Eye')
+  await sire
+    .locator('.morph-options button')
+    .filter({ hasText: 'Marble Eye' })
+    .click()
+  await expect(art).toHaveAttribute('data-eyes', 'marbled')
+  await sire
+    .getByRole('button', { name: 'Advanced genetics & evidence' })
+    .click()
+  await sire.locator('#Sire-snow').selectOption('1')
+  await sire.locator('#Sire-tremper').selectOption('1')
+  await expect(art).toHaveAttribute('data-eyes', 'marbled')
+  await search.fill('Normal / Wild Type')
+  await sire
+    .locator('.morph-options button')
+    .filter({ hasText: 'Normal / Wild Type' })
+    .click()
+  await sire
+    .getByRole('button', { name: 'Reverse Stripe', exact: true })
+    .click()
+  await expect(art).toHaveAttribute('data-pattern', 'reverse-stripe')
+  await expect(art).toHaveAttribute('data-body', 'normal')
+})

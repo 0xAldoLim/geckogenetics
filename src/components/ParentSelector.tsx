@@ -4,7 +4,8 @@ import type { GeneticState, Parent } from '../genetics/traits'
 import { traits, lineTraits, genotypeLabel, known } from '../genetics/traits'
 import { applyMorph, morphs } from '../data/morphs'
 import { parseShorthand } from '../genetics/parser'
-import MorphIllustration, { appearanceFor } from './MorphIllustration'
+import MorphIllustration from './MorphIllustration'
+import { appearanceForParent } from '../genetics/appearance'
 
 export default function ParentSelector({
   parent,
@@ -115,7 +116,7 @@ export default function ParentSelector({
         <span className="specimen-label">E. macularius</span>
         <div className="specimen-orbit" />
         <MorphIllustration
-          appearance={appearanceFor(parent.morph)}
+          appearance={appearanceForParent(parent)}
           flip={role === 'Dam'}
         />
         <span className="specimen-caption">ILLUSTRATIVE APPEARANCE</span>

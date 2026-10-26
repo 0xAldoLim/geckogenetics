@@ -1,4 +1,46 @@
 export const references = {
+  london: {
+    title: 'Leopard Geckos London · Morph Masterlist (2024, updated)',
+    url: 'https://www.leopardgeckoslondon.com/post/leopard-gecko-morph-masterlist',
+  },
+  darkTang: {
+    title:
+      'Leopard Geckos London · Dark Tangerine breeder listing on MorphMarket',
+    url: 'https://www.morphmarket.com/gb/c/reptiles/lizards/leopard-geckos/1263122',
+  },
+  onlineGeckos: {
+    title: 'OnlineGeckos · Dark Tangerine breeder records',
+    url: 'https://www.onlinegeckos.com/leopard-gecko-for-sale-tangerine-het-tremper-male-M25F86072520M.html',
+  },
+  hype: {
+    title: 'HypeGecko · Current Indonesian breeder listings',
+    url: 'https://www.hypegecko.com/shop',
+  },
+  piedMarket: {
+    title: 'Evolver Reptiles · Pied Galaxy listing on MorphMarket (2026)',
+    url: 'https://www.morphmarket.com/us/c/reptiles/lizards/leopard-geckos/4148077',
+  },
+  piedRaptor: {
+    title: 'Galactic Reptiles · Pied RAPTOR and partial eye description',
+    url: 'https://www.morphmarket.com/us/c/reptiles/lizards/leopard-geckos/1593894',
+  },
+  marketLines: {
+    title: 'MorphMarket · Leopard gecko breeder line listings (2026)',
+    url: 'https://www.morphmarket.com/us/c/reptiles/lizards/leopard-geckos?state=for_sale&traits__in=23025-t',
+  },
+  bm: {
+    title: 'B&M Gecko · Breeder inventory and projects',
+    url: 'https://bmgecko.com/pages/available-leopard-geckos-by-morph',
+  },
+  gwen: {
+    title: 'GwenGecko · Documented breeding projects',
+    url: 'https://gwengecko.com/new-page',
+  },
+  bojo: {
+    title:
+      'REPTILIAHOLIC public sales mirror · Bojoneroko name only; unverified',
+    url: 'https://telemetr.io/en/channels/1879743949-reptiliaholic',
+  },
   labs: {
     title: 'Gecko Labs · Quick blip on heritability (2015)',
     url: 'https://geckoforums.net/threads/quick-blip-on-heritability.104713/',

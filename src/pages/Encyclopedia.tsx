@@ -15,6 +15,8 @@ export default function Encyclopedia({
 }) {
   const [query, setQuery] = useState(initialSearch)
   const [filter, setFilter] = useState('all')
+  const [limit, setLimit] = useState(24)
+  const [source, setSource] = useState('all')
   const entries = morphs
     .filter((m) =>
       `${m.name} ${m.aliases.join(' ')} ${m.note}`
@@ -27,10 +29,41 @@ export default function Encyclopedia({
         (filter === 'genetic'
           ? m.loci
           : filter === 'line'
-            ? m.lineage
-            : filter === 'reference'
-              ? !m.loci && !m.lineage && !m.risk
-              : m.risk),
+            ? m.lineage || m.category === 'line'
+            : filter === 'eyes'
+              ? m.category === 'eye' ||
+                [
+                  'Eclipse',
+                  'Marble Eye',
+                  'Noir Desir Black Eye',
+                  'Blue Amber Eye',
+                  'Cipher',
+                ].includes(m.name)
+              : filter === 'patterns'
+                ? m.category === 'pattern' ||
+                  [
+                    'Blizzard',
+                    'Murphy Patternless',
+                    'Super Hypo',
+                    'Hypo',
+                    'Baldy',
+                    'Jungle',
+                    'Stripe',
+                    'Bold Stripe',
+                    'Reverse Stripe',
+                  ].includes(m.name)
+                : filter === 'reference'
+                  ? !m.loci && !m.lineage && !m.risk
+                  : m.risk),
+    )
+    .filter(
+      (m) =>
+        source === 'all' ||
+        (source === 'unverified'
+          ? m.category === 'unverified'
+          : source === 'marketplace'
+            ? m.refs?.some((id) => /morphmarket\.com/.test(references[id].url))
+            : m.refs?.includes('london')),
     )
   return (
     <section className="encyclopedia">
@@ -52,28 +85,54 @@ export default function Encyclopedia({
             autoFocus={Boolean(initialSearch)}
             aria-label="Search morph library"
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            onChange={(e) => {
+              setQuery(e.target.value)
+              setLimit(24)
+            }}
             placeholder="Search morphs, aliases, or characteristics…"
           />
         </label>
         <select
           aria-label="Filter morph category"
           value={filter}
-          onChange={(e) => setFilter(e.target.value)}
+          onChange={(e) => {
+            setFilter(e.target.value)
+            setLimit(24)
+          }}
         >
           <option value="all">All categories</option>
           <option value="genetic">Modeled genetics</option>
           <option value="line">Line-bred traits</option>
           <option value="welfare">Welfare concerns</option>
           <option value="reference">Reference / disputed</option>
+          <option value="eyes">Eye traits</option>
+          <option value="patterns">Pattern traits</option>
+        </select>
+        <select
+          aria-label="Filter catalog source"
+          value={source}
+          onChange={(e) => {
+            setSource(e.target.value)
+            setLimit(24)
+          }}
+        >
+          <option value="all">All sources</option>
+          <option value="london">London masterlist</option>
+          <option value="marketplace">Marketplace records</option>
+          <option value="unverified">Unverified names</option>
         </select>
       </div>
       <p className="small muted">
-        {entries.length} of {morphs.length} catalog entries · Reviewed 26
-        October 2026 · Catalog coverage is broader than the calculation model.
+        Showing {Math.min(limit, entries.length)} of {entries.length} matches ·{' '}
+        {morphs.length} total catalog entries · Reviewed 26 October 2026.
+      </p>
+      <p className="catalog-note">
+        A growing index of genes, patterns, eye traits, breeding lines, and
+        marketplace names. A sales label is evidence that a name is used; it
+        does not prove a new gene or establish an animal’s hidden genetics.
       </p>
       <div className="library-grid">
-        {entries.map((m) => {
+        {entries.slice(0, limit).map((m) => {
           const loci = traits.filter((t) => t.id in (m.loci ?? {}))
           const sources = [...new Set(m.refs ?? loci.flatMap((t) => t.refs))]
           if (!sources.length)
@@ -97,9 +156,13 @@ export default function Encyclopedia({
                       ? loci.length > 1
                         ? 'Combination morph'
                         : loci[0].inheritance.replaceAll('-', ' ')
-                      : m.lineage
-                        ? 'Line-bred / polygenic'
-                        : 'Reference · not modeled'}
+                      : m.category
+                        ? m.category === 'unverified'
+                          ? 'Unverified name'
+                          : `${m.category} · not a modeled gene`
+                        : m.lineage
+                          ? 'Line-bred / polygenic'
+                          : 'Reference · not modeled'}
                 </span>
                 <h2>{m.name}</h2>
                 {m.status && (
@@ -145,6 +208,14 @@ export default function Encyclopedia({
           )
         })}
       </div>
+      {entries.length > limit && (
+        <button
+          className="small-button more-results"
+          onClick={() => setLimit(limit + 24)}
+        >
+          Show 24 more entries ({entries.length - limit} remaining)
+        </button>
+      )}
       {entries.length === 0 && (
         <div className="empty-state">
           <h2>No matching morphs</h2>
@@ -157,6 +228,8 @@ export default function Encyclopedia({
             onClick={() => {
               setQuery('')
               setFilter('all')
+              setSource('all')
+              setLimit(24)
             }}
           >
             Show all morphs
