@@ -8,18 +8,21 @@ Explore what a leopard gecko pairing could produce—and understand why. GeckoGe
 
 ## Meet your next discovery
 
-- **Pair two geckos.** Search familiar morph names or enter documented genotypes, hidden traits, and possible hets.
+- **Pair two geckos.** Choose each morph, add visible traits, then select any hidden carrier traits (hets). Combine traits freely; breeder notes and detailed settings are optional.
 - **See the possibilities.** Explore offspring cards, a probability chart, and an interactive Punnett square. Switch between appearance and genotype views without losing carrier information.
 - **Understand the color story.** Keep Tangerine, Super Hypo, Carrot Tail, and other selected breeding lines separate from single-gene inheritance.
 - **Learn as you go.** Browse 196 indexed morph, pattern, eye-trait, breeding-line, and marketplace names. Filter by trait or source, including the Leopard Geckos London masterlist and marketplace records. Newer names such as Pied, Super Pied, Dark Tangerine, and Bojoneroko are searchable with their evidence status.
 - **See the actual feature change.** Cartoon guides use separate body, pattern, and eye features: Eclipse changes the eyes, Pied changes white patches, stripes change the markings, and hidden carrier genes do not change the drawing.
 - **Keep a pairing handy.** Save up to 20 pairings in your browser, share a pairing link, or copy results with their assumptions.
+- **Choose your lighting.** Use the sun/moon button to switch between light and dark mode. Your choice stays in this browser; the first visit follows your device preference.
 
 No accounts, subscriptions, database, or AI services. Calculations run on your device.
 
 ## Try a pairing
 
 The calculator opens with **Mack Snow × Mack Snow**: 25% normal at the Snow locus, 50% Mack Snow, and 25% Super Snow under the stated model.
+
+For **Black Night × Black Night het Tremper**, choose Black Night for both parents and add Tremper Albino under the second parent's **Hidden traits (hets)**. The standard estimate gives **0% visual Tremper, 50% carriers, and 50% non-carriers**, assuming the first parent does not carry Tremper. Both parents contribute Black Night ancestry; darkness and quality do not have a reliable single-gene percentage. This workflow also works for Tangerine, pattern lines, other indexed morphs, and combinations of supported genes. Select this pairing directly from the examples menu to explore it.
 
 Choose **Sunglow × SHTCT** from the example menu to explore the effect of Tremper carrier status:
 
@@ -34,7 +37,9 @@ The sire’s Tremper Albino strain is explicitly selected in these examples. The
 
 Percentages describe the chance for **each egg**, not a guaranteed clutch. Predictions depend on entered genotypes and the assumptions shown with the results.
 
-A normal appearance cannot rule out hidden recessive alleles. Unspecified genotypes stay unknown. “66.67% possible het” means a two-thirds chance of being a carrier under the stated parentage; it does not mean two-thirds of an allele. The calculator distinguishes an exact 2/3 from a literal 66% estimate.
+A normal appearance cannot rule out hidden recessive alleles. The default **Assume unlisted genes are not carried** option enables standard pairing estimates without requiring detailed records for both parents. Every assumption used in an active gene calculation is shown beside the results. Turn it off to calculate from entered records only. An explicitly unknown entry always stays unknown; assumptions never rewrite parental records and are included in saved/shared pairings. Older links without this option retain their record-only behavior.
+
+“66.67% possible het” means a two-thirds chance of being a carrier under the stated parentage; it does not mean two-thirds of an allele. The calculator distinguishes an exact 2/3 from a literal 66% estimate.
 
 The library includes breeding lines, combination names, and disputed traits beyond the supported calculation model. Its index draws on breeder references and marketplace listings; a marketplace label is evidence of naming, not proof of a new gene. No finite search can establish every trade name, and this index does not infer an animal’s genotype from its photograph. Pied/Super Pied are pattern descriptions with no invented expression percentages. Bojoneroko is indexed as an unverified trade line because primary originator genetics documentation was not located. Ambiguous shorthand such as `MSEBN H T` and `SP PH T` is preserved for clarification. Recognized expansions are shown before you confirm them.
 

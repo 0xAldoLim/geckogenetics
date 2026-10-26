@@ -12,14 +12,14 @@ GeckoGenetics is a static React application. It needs no server, API key, databa
 | `src/data/morphs.ts`           | Morph presets, aliases, combination components, reference-only entries, source/evidence annotations, welfare labels                        |
 | `src/data/references.ts`       | Source records shared by the catalog and educational pages                                                                                 |
 | `src/lib/storage.ts`           | Strict Zod schemas, validated URL-fragment encoding, Unicode round trips, local storage validation                                         |
-| `src/components/`              | Parent controls, original SVG artwork, outcome cards/charts, and weighted Punnett square                                                   |
+| `src/components/`              | Parent controls, cartoon artwork with local feature overlays, outcome cards/charts, and weighted Punnett square                            |
 | `src/pages/`                   | Searchable encyclopedia and genetics guide                                                                                                 |
 | `src/App.tsx`                  | App navigation, working vs. calculated pairing, presets, saves, sharing, observation text                                                  |
 | `src/tests/`, `e2e/`           | Independent genetics tests, exhaustive probability checks, desktop/mobile flows                                                            |
 
 ## Data flow
 
-Catalog selection, confirmed shorthand, and explicit advanced controls produce a typed `Pairing`. The UI maintains a working pairing and a separate calculated snapshot so pending edits are visible. Calculation crosses parental distributions at each eligible locus; it then multiplies these distributions under the documented independent-assortment assumption. Grouping changes presentation only, retaining underlying genotypes.
+Base morph selection, additive visible traits, direct het selection, confirmed combination text, and optional record controls produce a typed `Pairing`. `assumeUnlisted` enables scenario estimates for omitted states at active loci without changing the underlying records. Explicit unknown states are never replaced by assumptions. The same state resolver is used by the engine and Punnett square. The UI maintains a working pairing and a separate calculated snapshot so pending edits are visible. Calculation crosses parental distributions at each eligible locus; it then multiplies these distributions under the documented independent-assortment assumption. Grouping changes presentation only, retaining underlying genotypes.
 
 Every engine function is independent of React and storage. Adding another species should provide its own catalog, locus definitions, allele/phenotype mapping, and validation adapter, reusing rational and diploid-cross primitives where appropriate. Do not merge another species’ rules into the leopard gecko catalog.
 
@@ -29,6 +29,8 @@ Update the catalog or locus definition with supporting evidence. New names can e
 
 ## Browser behavior
 
+The sun/moon button applies a semantic light/dark palette without filtering gecko artwork. A pre-paint bootstrap uses a validated browser preference or the initial system color scheme; manual choices persist independently of pairing data. The toggle remains usable when storage is blocked.
+
 Navigation is local state and works on a static host. Shared pairings live in a URL fragment, not a query sent to a backend. Imported data is parsed through a strict schema before use. React escapes text; no user-controlled HTML is rendered. Genotype notes and unknown labels never execute as code.
 
 The app uses system fonts, original cartoon WebP illustrations, and bundled icons. `appearance.ts` maps expressed genotypes to separate body-color, body-pattern, eye, head, and tail features. Parent/library appearance descriptors are distinct from inferred offspring genetics. Carrier states never become visible art traits. `MorphIllustration` selects an actual pattern asset, while `CartoonEyes` modifies only the eye region; local head and tail features remain separate. Illustrations remain explicitly non-predictive. No runtime asset CDN is required. Tailwind’s Vite integration and semantic component styles form the UI. Motion respects reduced-motion preferences.
@@ -37,6 +39,6 @@ The app uses system fonts, original cartoon WebP illustrations, and bundled icon
 
 ## Validation and delivery
 
-`pnpm test` verifies required crosses, possible hets, the six-genotype Gecko Labs example, carrier conditioning, separate albino strains, aliases, data validation, welfare aliases, and exact probability conservation. Exhaustive tests check all supported loci over seven representative known/possible parent states in both crossing directions and all eight simultaneous heterozygous loci.
+`pnpm test` verifies required crosses, possible hets, the six-genotype Gecko Labs example, carrier conditioning, separate albino strains, aliases, data validation, welfare aliases, and exact probability conservation. Exhaustive tests check all supported loci over seven representative known/possible parent states in both crossing directions and all eight simultaneous heterozygous loci. General estimate regressions cover carrier additions across every non-risk catalog entry and each supported recessive, explicit unknown overrides, trait stacking, and assumption settings in legacy/new links.
 
 `pnpm test:e2e` checks desktop and mobile Chromium for the primary controls, presets, Punnett expansion, genotype editing, saved/shared pairings, ambiguous input, welfare behavior, corrupt storage, responsive overflow, and runtime errors. `pnpm build` runs strict TypeScript checks before producing `dist/`. CI uploads the static production build and browser diagnostics as artifacts.

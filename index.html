@@ -4,6 +4,21 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#214d39" />
+    <script>
+      // Apply the saved preference before paint; otherwise follow the device.
+      ;(() => {
+        let saved
+        try {
+          saved = localStorage.getItem('geckogenetics.theme')
+        } catch {}
+        document.documentElement.dataset.theme =
+          saved === 'light' || saved === 'dark'
+            ? saved
+            : matchMedia('(prefers-color-scheme: dark)').matches
+              ? 'dark'
+              : 'light'
+      })()
+    </script>
     <meta
       name="description"
       content="Explore leopard gecko genetics. Calculate offspring probabilities, understand possible hets, and discover the science behind your pairing."

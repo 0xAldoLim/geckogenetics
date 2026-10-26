@@ -155,6 +155,7 @@ export interface Parent {
 }
 export interface Pairing {
   version: 1
+  assumeUnlisted?: boolean
   sire: Parent
   dam: Parent
   observed: string

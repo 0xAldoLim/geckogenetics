@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import { ChevronDown, Dna, Info, Search, X, Check } from 'lucide-react'
 import type { GeneticState, Parent } from '../genetics/traits'
-import { traits, lineTraits, genotypeLabel, known } from '../genetics/traits'
-import { applyMorph, morphs } from '../data/morphs'
+import { traits, lineTraits, known } from '../genetics/traits'
+import { applyMorph, addMorph, morphs } from '../data/morphs'
 import { parseShorthand } from '../genetics/parser'
 import MorphIllustration from './MorphIllustration'
 import { appearanceForParent } from '../genetics/appearance'
@@ -22,11 +22,16 @@ export default function ParentSelector({
   const [search, setSearch] = useState('')
   const [review, setReview] = useState(false)
   const [error, setError] = useState('')
+  const [adding, setAdding] = useState(false)
   const parsed = parseShorthand(search)
   const active = traits.filter(
     (t) => parent.loci[t.id] && parent.loci[t.id].kind !== 'unknown',
   )
   const selectedMorph = morphs.find((m) => m.name === parent.morph)
+  const needsAlbinoStrain = morphs.some(
+    (m) =>
+      m.ambiguous && parent.morph.toLowerCase().includes(m.name.toLowerCase()),
+  )
   const options = morphs
     .filter((m) =>
       `${m.name} ${m.aliases.join(' ')}`
@@ -43,14 +48,15 @@ export default function ParentSelector({
       )
       return
     }
-    const next = {
+    const preserve = adding || parsed.proposals.length === 0
+    const next: Parent = {
       ...parent,
-      morph: search.slice(0, 200),
-      loci: { ...parent.loci },
-      lineage: [...parent.lineage],
+      morph: (adding ? `${parent.morph} + ${search}` : search).slice(0, 200),
+      loci: preserve ? { ...parent.loci } : {},
+      lineage: preserve ? [...parent.lineage] : [],
       labels: [
         ...new Set([
-          ...parent.labels,
+          ...(preserve ? parent.labels : []),
           ...parsed.unresolved.map((s) => s.slice(0, 150)),
         ]),
       ].slice(0, 30),
@@ -92,6 +98,7 @@ export default function ParentSelector({
     onChange(next)
     setSearch('')
     setReview(false)
+    setAdding(false)
     setError('')
   }
   return (
@@ -124,7 +131,7 @@ export default function ParentSelector({
       <div className="parent-body">
         <div className="morph-current">
           <div>
-            <span className="field-label">SELECTED MORPH</span>
+            <span className="field-label">MORPH & VISIBLE TRAITS</span>
             <h3>{parent.morph}</h3>
           </div>
           <button
@@ -140,7 +147,11 @@ export default function ParentSelector({
           <Search size={16} />
           <input
             aria-label={`${role} morph search`}
-            placeholder="Search a morph or enter shorthand…"
+            placeholder={
+              adding
+                ? 'Search a trait to add…'
+                : 'Choose a morph or enter a combination…'
+            }
             value={search}
             maxLength={200}
             onChange={(e) => {
@@ -167,8 +178,9 @@ export default function ParentSelector({
               <button
                 key={m.name}
                 onClick={() => {
-                  onChange(applyMorph(parent, m))
+                  onChange(adding ? addMorph(parent, m) : applyMorph(parent, m))
                   setSearch('')
+                  setAdding(false)
                 }}
               >
                 <span>{m.name}</span>
@@ -178,7 +190,7 @@ export default function ParentSelector({
               </button>
             ))}
             <button className="parse-button" onClick={() => setReview(true)}>
-              <Dna size={15} /> Review shorthand / custom label
+              <Dna size={15} /> Review combination / custom label
             </button>
           </div>
         )}
@@ -202,8 +214,12 @@ export default function ParentSelector({
               </p>
             )}
             <p className="muted">
-              For example: MS H TA, or 50% PH TA. Confirming adds known entries
-              to the current genetics.
+              For example: Black Night het Tremper, or Mack Snow + Eclipse.
+              {!parsed.proposals.length
+                ? ' No recognized genetics will be changed.'
+                : adding
+                  ? ' These traits will be added to the current selection.'
+                  : ' These traits will replace the current selection.'}
             </p>
             {error && <p role="alert">{error}</p>}
             <button className="small-button" onClick={confirmParsed}>
@@ -233,13 +249,42 @@ export default function ParentSelector({
                 {t.name}{' '}
                 <b>
                   {state.kind === 'known'
-                    ? genotypeLabel(t, state.copies)
+                    ? state.copies === 0
+                      ? 'not carrying'
+                      : state.copies === 1 && t.inheritance === 'recessive'
+                        ? 'het (carrier)'
+                        : t.inheritance === 'recessive'
+                          ? 'visual'
+                          : `${state.copies} ${state.copies === 1 ? 'copy' : 'copies'}`
                     : state.kind === 'possible'
                       ? `${Number(((state.n / state.d) * 100).toFixed(2))}% possible het`
                       : '?'}
                 </b>
                 <button
-                  onClick={() => updateLocus(t.id, { kind: 'unknown' })}
+                  onClick={() => {
+                    const loci = { ...parent.loci }
+                    delete loci[t.id]
+                    const visible = traits.flatMap((trait) => {
+                      const s = loci[trait.id]
+                      return s?.kind === 'known' &&
+                        (trait.inheritance === 'recessive'
+                          ? s.copies === 2
+                          : s.copies > 0)
+                        ? [trait.visual[s.copies]]
+                        : []
+                    })
+                    const morph =
+                      [
+                        ...new Set([
+                          ...parent.lineage,
+                          ...visible,
+                          ...parent.labels,
+                        ]),
+                      ]
+                        .join(' + ')
+                        .slice(0, 200) || 'Normal / Wild Type'
+                    onChange({ ...parent, morph, loci })
+                  }}
                   aria-label={`Remove ${role} ${t.name}`}
                 >
                   <X size={12} />
@@ -249,26 +294,129 @@ export default function ParentSelector({
           })}
           {!active.length && (
             <span className="muted small">
-              No confirmed single-locus genetics selected.
+              {parent.lineage.length
+                ? 'Breeding line selected. Add any known hets below.'
+                : 'Add any known carrier traits below.'}
             </span>
           )}
         </div>
+        <button
+          className="text-button add-trait-button"
+          onClick={() => {
+            setAdding(!adding)
+            setSearch('')
+            setReview(false)
+          }}
+          aria-pressed={adding}
+        >
+          {adding ? 'Cancel adding a trait' : '+ Add another visible trait'}
+        </button>
+        <div className="het-picker">
+          <label className="field-label" htmlFor={`${role}-het`}>
+            HIDDEN TRAITS (HETS)
+          </label>
+          <select
+            id={`${role}-het`}
+            value=""
+            onChange={(e) => {
+              if (e.target.value) updateLocus(e.target.value, known(1))
+            }}
+          >
+            <option value="">+ Add a het / carrier trait</option>
+            {traits
+              .filter((t) => {
+                const state = parent.loci[t.id]
+                return (
+                  t.inheritance === 'recessive' &&
+                  !(state?.kind === 'known' && state.copies > 0)
+                )
+              })
+              .map((t) => (
+                <option value={t.id} key={t.id}>
+                  {t.name}
+                </option>
+              ))}
+          </select>
+          <p className="small muted">
+            A het carries a recessive gene without showing it.
+          </p>
+        </div>
+        {needsAlbinoStrain && (
+          <div className="het-picker">
+            <label className="field-label" htmlFor={`${role}-albino-strain`}>
+              ALBINO STRAIN
+            </label>
+            <select
+              id={`${role}-albino-strain`}
+              value={
+                ['tremper', 'bell', 'rainwater'].find((id) => {
+                  const state = parent.loci[id]
+                  return state?.kind === 'known' && state.copies === 2
+                }) ?? ''
+              }
+              onChange={(e) => {
+                const loci = { ...parent.loci }
+                for (const id of ['tremper', 'bell', 'rainwater']) {
+                  const state = loci[id]
+                  if (state?.kind === 'known' && state.copies === 2)
+                    delete loci[id]
+                }
+                if (e.target.value) loci[e.target.value] = known(2)
+                onChange({ ...parent, loci })
+              }}
+            >
+              <option value="">Choose a strain if known</option>
+              <option value="tremper">Tremper Albino</option>
+              <option value="bell">Bell Albino</option>
+              <option value="rainwater">Rainwater Albino</option>
+            </select>
+          </div>
+        )}
+        {(/white\s*(?:&|and)\s*yellow|w&y/i.test(parent.morph) ||
+          parent.loci.wy) && (
+          <div className="het-picker">
+            <label className="field-label" htmlFor={`${role}-wy-scenario`}>
+              WHITE & YELLOW SCENARIO
+            </label>
+            <select
+              id={`${role}-wy-scenario`}
+              value={
+                parent.loci.wy?.kind === 'known'
+                  ? String(parent.loci.wy.copies)
+                  : 'unknown'
+              }
+              onChange={(e) =>
+                updateLocus(
+                  'wy',
+                  e.target.value === 'unknown'
+                    ? { kind: 'unknown' }
+                    : known(Number(e.target.value) as 0 | 1 | 2),
+                )
+              }
+            >
+              <option value="unknown">Choose copies if known</option>
+              <option value="1">One copy (typical scenario)</option>
+              <option value="2">Two copies</option>
+              <option value="0">Without White & Yellow</option>
+            </select>
+          </div>
+        )}
         <button
           className="advanced-toggle"
           onClick={() => setAdvanced(!advanced)}
           aria-expanded={advanced}
         >
           <span>
-            <Dna size={15} /> Advanced genetics & evidence
+            <Dna size={15} /> More options & notes (optional)
           </span>
           <ChevronDown className={advanced ? 'rotated' : ''} size={16} />
         </button>
         {advanced && (
           <div className="advanced-fields">
             <p className="small muted">
-              Genotypes are based on your records. A normal-looking gecko can
-              carry recessive alleles. “Possible het” is a chance of being a
-              carrier, not a fraction of an allele.
+              Set possible hets, mark a trait as unknown, or add breeder notes.
+              These options are optional. A normal appearance cannot rule out
+              hidden carrier genes.
             </p>
             {traits.map((t) => {
               const state = parent.loci[t.id] ?? { kind: 'unknown' }
@@ -393,7 +541,7 @@ export default function ParentSelector({
         )}
         <div className="lineage-picker">
           <span className="field-label">
-            LINE-BRED TRAITS{' '}
+            COLOR & PATTERN LINES{' '}
             <span title="Selected ancestry may influence appearance, but cannot be assigned a reliable Mendelian percentage.">
               ⓘ
             </span>
@@ -425,7 +573,7 @@ export default function ParentSelector({
           </div>
           {!advanced && (
             <small className="more-lineage-note">
-              More breeding lines in Advanced genetics.
+              More breeding lines in optional settings.
             </small>
           )}
         </div>

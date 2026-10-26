@@ -1,4 +1,4 @@
-import { traits, genotypeLabel } from './traits'
+import { traits, genotypeLabel, known } from './traits'
 import type { GeneticState, Genotype, Pairing, Trait } from './traits'
 import { Rational, one, zero, sum } from './probability'
 import { morphs } from '../data/morphs'
@@ -53,11 +53,24 @@ export interface Prediction {
   unknown: Trait[]
   possible: string[]
   blocked: boolean
+  assumed: { parent: 'Sire' | 'Dam'; trait: Trait }[]
+}
+/** A missing entry can be an explicit scenario assumption; an unknown record cannot. */
+export function stateForCalculation(
+  pair: Pairing,
+  parent: 'sire' | 'dam',
+  id: string,
+): GeneticState {
+  return (
+    pair[parent].loci[id] ??
+    (pair.assumeUnlisted ? known(0) : { kind: 'unknown' })
+  )
 }
 export function calculate(pair: Pairing): Prediction {
   const loci: LocusResult[] = [],
     unknown: Trait[] = [],
-    possible: string[] = []
+    possible: string[] = [],
+    assumed: Prediction['assumed'] = []
   const blocked = [
     ...pair.sire.labels,
     ...pair.dam.labels,
@@ -70,12 +83,19 @@ export function calculate(pair: Pairing): Prediction {
       ) || /lemon frost|enigma/i.test(s),
   )
   for (const trait of traits) {
-    const a = pair.sire.loci[trait.id] ?? { kind: 'unknown' },
-      b = pair.dam.loci[trait.id] ?? { kind: 'unknown' }
+    if (!pair.sire.loci[trait.id] && !pair.dam.loci[trait.id]) continue
+    const a = stateForCalculation(pair, 'sire', trait.id),
+      b = stateForCalculation(pair, 'dam', trait.id)
     if (a.kind === 'unknown' && b.kind === 'unknown') continue
     const d = cross(a, b)
     if (!d) unknown.push(trait)
-    else loci.push({ trait, distribution: d })
+    else {
+      loci.push({ trait, distribution: d })
+      if (pair.assumeUnlisted) {
+        if (!pair.sire.loci[trait.id]) assumed.push({ parent: 'Sire', trait })
+        if (!pair.dam.loci[trait.id]) assumed.push({ parent: 'Dam', trait })
+      }
+    }
     if (a.kind === 'possible' || b.kind === 'possible')
       possible.push(trait.name)
   }
@@ -94,7 +114,7 @@ export function calculate(pair: Pairing): Prediction {
           : [],
       ),
     )
-  return { outcomes, loci, unknown, possible, blocked }
+  return { outcomes, loci, unknown, possible, blocked, assumed }
 }
 export function phenotype(outcome: Outcome): string {
   const expressed = traits

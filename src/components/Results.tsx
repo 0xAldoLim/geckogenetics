@@ -39,7 +39,13 @@ export function resultSummary(pair: Pairing) {
     ),
     `Modeled loci: ${result.loci.map((l) => l.trait.name).join(', ') || 'none'}. Unknown active loci: ${result.unknown.map((t) => t.name).join(', ') || 'none'}.`,
     `Possible-het assumptions: ${result.possible.join(', ') || 'none'}.`,
-    'Conditional on entered genotypes, independent assortment, and complete Mendelian expression. Unspecified loci remain unknown. Per-egg expectations, not clutch guarantees. Appearance may be masked by other traits.',
+    pair.assumeUnlisted
+      ? 'Unlisted active genes assumed not carried for this estimate. Explicitly unknown records stay unknown.'
+      : 'Record-only mode: unspecified loci remain unknown.',
+    ...result.assumed.map(
+      ({ parent, trait }) => `Assumed non-carrier: ${parent} · ${trait.name}.`,
+    ),
+    'Conditional on entered genotypes, independent assortment, and complete Mendelian expression. Per-egg expectations, not clutch guarantees. Appearance may be masked by other traits.',
     `Line-bred ancestry (no expression percentages): ${[...new Set([...pair.sire.lineage, ...pair.dam.lineage])].join(', ') || 'none recorded'}.`,
     `Sire evidence: ${pair.sire.evidence || 'not recorded'}. Dam evidence: ${pair.dam.evidence || 'not recorded'}.`,
     `Unresolved/reference labels: ${[...pair.sire.labels, ...pair.dam.labels].join(', ') || 'none'}.`,
@@ -70,7 +76,17 @@ export default function Results({
   const lineage = [...new Set([...pair.sire.lineage, ...pair.dam.lineage])]
   const unmodeledLabels = [
     ...new Set([...pair.sire.labels, ...pair.dam.labels]),
-  ]
+  ].filter(
+    (label) =>
+      !lineage.some((line) => line.toLowerCase() === label.toLowerCase()) &&
+      !result.loci.some(
+        ({ trait }) => trait.name.toLowerCase() === label.toLowerCase(),
+      ),
+  )
+  const displayTitle = (title: string) =>
+    lineage.length
+      ? title.replace('Normal at modeled loci', 'No visual single-gene traits')
+      : title
   const chartGroups =
     groups.length > 8
       ? [
@@ -156,25 +172,74 @@ export default function Results({
               {result.unknown.map((t) => t.name).join(', ')}.
             </strong>
             <p>
-              One parent’s genotype is unknown. Use Advanced genetics to enter
-              documented status. These loci are excluded; any results below
-              cover only the other modeled loci.
+              One parent’s status is unknown. Add its carrier trait or use the
+              unlisted-gene assumption for a scenario estimate. Explicitly
+              unknown entries can be changed in the optional settings. These
+              genes are excluded from the percentages below.
             </p>
           </div>
         </div>
       )}
-      {!result.outcomes.length && !result.blocked && (
+      {!result.outcomes.length && !result.blocked && !lineage.length && (
         <div className="empty-state">
           <DnaIcon />
           <h3>Start with what you know.</h3>
           <p>
-            Choose a genetic trait for both parents, or try an educational
-            preset. Unknown genotypes cannot produce a unique probability.
+            Choose each parent’s morph and add any het traits. You can combine
+            traits freely or start with an example pairing.
           </p>
         </div>
       )}
       {groups.length > 0 && (
         <>
+          {result.assumed.length > 0 && (
+            <div className="notice calculation-assumptions">
+              <Info size={18} />
+              <p>
+                <strong>Estimate assumption:</strong>{' '}
+                {result.assumed
+                  .map(
+                    ({ parent, trait }) =>
+                      `${parent} is not carrying ${trait.name}`,
+                  )
+                  .join('; ')}
+                . Add a het if this differs from your records.
+              </p>
+            </div>
+          )}
+          <div className="gene-probabilities">
+            {result.loci.map(({ trait, distribution: d }) => {
+              const entries =
+                trait.inheritance === 'recessive'
+                  ? [
+                      { label: `Visual ${trait.name}`, chance: d[2] },
+                      { label: 'Het (carrier)', chance: d[1] },
+                      { label: 'Not carrying', chance: d[0] },
+                    ]
+                  : trait.inheritance === 'dominant'
+                    ? [
+                        { label: trait.name, chance: d[1].add(d[2]) },
+                        { label: 'Without this trait', chance: d[0] },
+                      ]
+                    : d.map((chance, i) => ({ label: trait.visual[i], chance }))
+              return (
+                <article
+                  key={trait.id}
+                  aria-label={`${trait.name} probabilities`}
+                >
+                  <h3>{trait.name}</h3>
+                  <dl>
+                    {entries.map(({ label, chance }) => (
+                      <div key={label}>
+                        <dt>{label}</dt>
+                        <dd>{percent(chance)}</dd>
+                      </div>
+                    ))}
+                  </dl>
+                </article>
+              )
+            })}
+          </div>
           <div className="results-toolbar">
             <span className="model-status">
               <CheckCheck size={15} /> {result.loci.length} modeled{' '}
@@ -223,7 +288,7 @@ export default function Results({
               {chartGroups.map((g, i) => (
                 <span key={g.title}>
                   <i style={{ background: colors[i % colors.length] }} />
-                  {g.title} <b>{percent(g.probability)}</b>
+                  {displayTitle(g.title)} <b>{percent(g.probability)}</b>
                 </span>
               ))}
             </div>
@@ -250,10 +315,11 @@ export default function Results({
                 <div className="offspring-body">
                   <h3>
                     {g.title === 'Normal at modeled loci' &&
+                    !lineage.length &&
                     result.loci.length === 1 &&
                     result.loci[0].trait.id === 'snow'
                       ? 'Normal / Wild Type'
-                      : g.title}
+                      : displayTitle(g.title)}
                   </h3>
                   <span className="outcome-category">
                     {g.outcomes.length > 1
@@ -334,7 +400,10 @@ export default function Results({
               <DnaIcon small /> Independent assortment assumed
             </span>
             <span>
-              <Info size={15} /> Unspecified loci remain unknown
+              <Info size={15} />{' '}
+              {pair.assumeUnlisted
+                ? 'Unlisted active genes assumed not carried'
+                : 'Unspecified loci remain unknown'}
             </span>
           </div>
           {result.possible.length > 0 && (
@@ -354,10 +423,14 @@ export default function Results({
         </div>
         <div>
           <span className="eyebrow">BEYOND THE PUNNETT SQUARE</span>
-          <h3>Line-bred trait influence</h3>
+          <h3>
+            {lineage.length
+              ? `${lineage.join(' + ')} lineage`
+              : 'Color & pattern lineage'}
+          </h3>
           <p>
             {lineage.length
-              ? 'Ancestry can shape the story. It cannot tell us the exact shade, pattern, or spotting of a hatchling.'
+              ? 'Offspring inherit ancestry from these breeding lines. Exact darkness, color intensity, pattern, and quality vary; there is no validated single-gene percentage for them.'
               : 'Add line-bred traits to either parent to explore their influence on color and pattern.'}
           </p>
           <div className="lineage-results">
@@ -378,9 +451,9 @@ export default function Results({
             ))}
           </div>
           <p className="small muted">
-            Tangerine intensity, Super Hypo spotting, Carrot Tail coloration,
-            and melanistic lines have no validated single-locus expression
-            percentages.
+            {lineage.length && !result.loci.length && !result.unknown.length
+              ? 'This pairing is valid. Add a het or a single-gene trait to calculate carrier and visual probabilities.'
+              : 'The percentages above describe the modeled genes. They do not measure the chance of a particular line-bred shade.'}
           </p>
         </div>
         <Sparkles className="lineage-sparkle" size={30} />

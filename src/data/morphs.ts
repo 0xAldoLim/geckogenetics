@@ -44,13 +44,13 @@ export const morphs: Morph[] = [
   {
     name: 'Normal / Wild Type',
     aliases: ['Normal', 'Wild Type'],
-    note: 'A normal appearance cannot rule out hidden recessive alleles. Set documented genotypes in Advanced.',
+    note: 'Add any known hets below. A normal appearance cannot rule out hidden recessive genes; estimate assumptions are shown with your results.',
   },
   {
     name: 'Mack Snow',
     aliases: ['MS'],
     loci: { snow: 1 },
-    note: 'One Mack Snow allele; unrelated hidden recessives remain unknown.',
+    note: 'One Mack Snow allele. This name does not establish unrelated carrier status; add known hets below.',
   },
   {
     name: 'Super Snow',
@@ -60,20 +60,20 @@ export const morphs: Morph[] = [
   },
   {
     name: 'Tremper Albino',
-    aliases: ['TA'],
+    aliases: ['TA', 'Tremper'],
     loci: { tremper: 2 },
     note: 'Visual Tremper, based on your identification and records.',
   },
   {
     name: 'Bell Albino',
-    aliases: ['BA', 'Florida Albino'],
+    aliases: ['BA', 'Florida Albino', 'Bell'],
     loci: { bell: 2 },
     refs: ['bell', 'strains'],
     note: 'Visual Bell. Albino strains must be identified from records, not color alone. Light sensitivity is reported in albino lines.',
   },
   {
     name: 'Rainwater Albino',
-    aliases: ['RW', 'Las Vegas Albino'],
+    aliases: ['RW', 'Las Vegas Albino', 'Rainwater'],
     loci: { rainwater: 2 },
     note: 'Visual Rainwater; not interchangeable with Bell or Tremper.',
   },
@@ -129,7 +129,7 @@ export const morphs: Morph[] = [
   },
   {
     name: 'Black Night',
-    aliases: ['BN'],
+    aliases: ['BN', 'BlackNight'],
     lineage: ['Black Night'],
     note: 'Melanistic breeding line; exact expression and genetic architecture are not modeled.',
   },
@@ -148,7 +148,7 @@ export const morphs: Morph[] = [
   {
     name: 'White & Yellow',
     aliases: ['W&Y'],
-    note: 'Dominant breeder model. Set one or two copies only with supporting records in Advanced.',
+    note: 'Dominant breeder model. Choose a one-copy or two-copy scenario below; appearance alone cannot distinguish them.',
   },
   {
     name: 'Lemon Frost',
@@ -517,8 +517,21 @@ export function applyMorph(parent: Parent, morph: Morph): Parent {
     ],
   }
 }
+export function addMorph(parent: Parent, morph: Morph): Parent {
+  const added = applyMorph(parent, morph)
+  return {
+    ...parent,
+    morph:
+      parent.morph === 'Normal / Wild Type'
+        ? morph.name
+        : [...new Set([parent.morph, morph.name])].join(' + ').slice(0, 200),
+    loci: { ...parent.loci, ...added.loci },
+    lineage: [...new Set([...parent.lineage, ...added.lineage])],
+    labels: [...new Set([...parent.labels, ...added.labels])].slice(0, 30),
+  }
+}
 export function preset(
-  id: 'snow' | 'sunglow-a' | 'sunglow-b' | 'labs',
+  id: 'snow' | 'sunglow-a' | 'sunglow-b' | 'labs' | 'black-night',
 ): Pairing {
   const sire = blankParent(),
     dam = blankParent()
@@ -529,6 +542,10 @@ export function preset(
     sire.morph = dam.morph = 'Mack Snow'
     sire.loci.snow = known(1)
     dam.loci.snow = known(1)
+  } else if (id === 'black-night') {
+    sire.morph = dam.morph = 'Black Night'
+    sire.lineage = dam.lineage = ['Black Night']
+    dam.loci.tremper = known(1)
   } else if (id === 'labs') {
     sire.morph = 'Tremper Albino het Eclipse'
     sire.loci = { tremper: known(2), eclipse: known(1) }
@@ -542,5 +559,5 @@ export function preset(
     dam.loci.tremper = known(id === 'sunglow-a' ? 0 : 1)
     dam.lineage = ['Super Hypo', 'Tangerine', 'Carrot Tail']
   }
-  return { version: 1, sire, dam, observed: '' }
+  return { version: 1, assumeUnlisted: true, sire, dam, observed: '' }
 }

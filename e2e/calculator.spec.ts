@@ -24,7 +24,7 @@ test('calculator, advanced controls and library meet automated WCAG A/AA checks'
   await audit()
   await page
     .getByRole('region', { name: 'Sire parent' })
-    .getByRole('button', { name: 'Advanced genetics & evidence' })
+    .getByRole('button', { name: 'More options & notes (optional)' })
     .click()
   await page.locator('#Sire-tremper').selectOption('possible')
   await audit()
@@ -89,10 +89,10 @@ test('advanced genotypes, possible het, reset and observations', async ({
   const sire = page.getByRole('region', { name: 'Sire parent' }),
     dam = page.getByRole('region', { name: 'Dam parent' })
   await sire
-    .getByRole('button', { name: 'Advanced genetics & evidence' })
+    .getByRole('button', { name: 'More options & notes (optional)' })
     .click()
   await dam
-    .getByRole('button', { name: 'Advanced genetics & evidence' })
+    .getByRole('button', { name: 'More options & notes (optional)' })
     .click()
   await sire.locator('#Sire-tremper').selectOption('possible')
   await sire
@@ -126,7 +126,7 @@ test('ambiguous shorthand is preserved without contaminating predictions', async
   const sire = page.getByRole('region', { name: 'Sire parent' })
   await sire.getByLabel('Sire morph search').fill('MSEBN H T')
   await sire
-    .getByRole('button', { name: 'Review shorthand / custom label' })
+    .getByRole('button', { name: 'Review combination / custom label' })
     .click()
   await expect(sire.locator('.parse-review')).toContainText('Unresolved:')
   await sire.getByRole('button', { name: 'Confirm recognized traits' }).click()
@@ -139,7 +139,7 @@ test('ambiguous shorthand is preserved without contaminating predictions', async
   ])
   await sire.getByLabel('Sire morph search').fill('50% PH TA')
   await sire
-    .getByRole('button', { name: 'Review shorthand / custom label' })
+    .getByRole('button', { name: 'Review combination / custom label' })
     .click()
   await sire.getByRole('button', { name: 'Confirm recognized traits' }).click()
   await expect(sire.locator('.trait-chips')).toContainText('50% possible het')
@@ -238,7 +238,7 @@ test('learning flow, result copy and keyboard access work', async ({
     .click()
   const summary = await page.getByLabel('Plain-text results').inputValue()
   expect(summary).toContain('25% Normal at modeled loci')
-  expect(summary).toContain('Unspecified loci remain unknown')
+  expect(summary).toContain('Unlisted active genes assumed not carried')
   await page.getByRole('button', { name: 'Let’s learn genetics' }).click()
   await expect(
     page.getByRole('heading', { name: 'Understand the possibilities.' }),
@@ -337,7 +337,7 @@ test('parent controls preserve eye patterns and apply selected body markings', a
     .click()
   await expect(art).toHaveAttribute('data-eyes', 'marbled')
   await sire
-    .getByRole('button', { name: 'Advanced genetics & evidence' })
+    .getByRole('button', { name: 'More options & notes (optional)' })
     .click()
   await sire.locator('#Sire-snow').selectOption('1')
   await sire.locator('#Sire-tremper').selectOption('1')
@@ -352,4 +352,137 @@ test('parent controls preserve eye patterns and apply selected body markings', a
     .click()
   await expect(art).toHaveAttribute('data-pattern', 'reverse-stripe')
   await expect(art).toHaveAttribute('data-body', 'normal')
+})
+
+test('dark mode persists, follows the initial device preference, and stays accessible', async ({
+  page,
+}) => {
+  test.setTimeout(90000)
+  await page.emulateMedia({ colorScheme: 'dark' })
+  await page.goto('/')
+  const theme = page.getByRole('button', { name: 'Dark mode', exact: true })
+  await expect(theme).toHaveAttribute('aria-pressed', 'true')
+  await theme.click()
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'light')
+  await page.reload()
+  await expect(theme).toHaveAttribute('aria-pressed', 'false')
+  await theme.click()
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark')
+  const audit = async () => {
+    const r = await new AxeBuilder({ page })
+      .withTags(['wcag2a', 'wcag2aa'])
+      .analyze()
+    expect(
+      r.violations.map((v) => ({
+        id: v.id,
+        nodes: v.nodes.map((n) => ({
+          target: n.target,
+          reason: n.failureSummary,
+        })),
+      })),
+    ).toEqual([])
+  }
+  await audit()
+  await page
+    .getByRole('region', { name: 'Sire parent' })
+    .getByRole('button', { name: 'More options & notes (optional)' })
+    .click()
+  await audit()
+  const nav = page.getByRole('button', { name: 'Toggle navigation' })
+  if (await nav.isVisible()) await nav.click()
+  await page.getByRole('button', { name: 'Morph library', exact: true }).click()
+  await audit()
+  if (await nav.isVisible()) await nav.click()
+  await page.getByRole('button', { name: 'Genetics 101', exact: true }).click()
+  await audit()
+})
+
+test('any morph can receive hets and additional traits without opening optional settings', async ({
+  page,
+}) => {
+  await page.goto('/')
+  const sire = page.getByRole('region', { name: 'Sire parent' })
+  const dam = page.getByRole('region', { name: 'Dam parent' })
+  for (const name of ['Black Night', 'Tangerine', 'Bold Stripe']) {
+    for (const parent of [sire, dam]) {
+      await parent.getByRole('textbox', { name: /morph search/ }).fill(name)
+      await parent
+        .locator('.morph-options button')
+        .filter({ has: page.getByText(name, { exact: true }) })
+        .click()
+    }
+    await dam.locator('#Dam-het').selectOption('tremper')
+    await expect(dam.locator('.advanced-fields')).toHaveCount(0)
+    await page
+      .getByRole('button', { name: 'Calculate offspring', exact: true })
+      .click()
+    const summary = page.getByRole('article', {
+      name: 'Tremper Albino probabilities',
+    })
+    await expect(summary.locator('dd')).toHaveText(['0%', '50%', '50%'])
+    await expect(page.locator('.lineage-results')).toContainText(name)
+    await page.getByRole('button', { name: 'By genotype', exact: true }).click()
+    await expect(page.locator('.probability-badge')).toHaveText(['50%', '50%'])
+    if (!(await page.locator('.punnett-table').isVisible()))
+      await page.locator('.punnett-panel > summary').click()
+    await expect(page.locator('.punnett-table')).toBeVisible()
+  }
+  await sire
+    .getByRole('button', { name: '+ Add another visible trait', exact: true })
+    .click()
+  await sire.getByLabel('Sire morph search').fill('Eclipse')
+  await sire
+    .locator('.morph-options button')
+    .filter({ has: page.getByText('Eclipse', { exact: true }) })
+    .click()
+  await expect(sire.locator('.trait-chips')).toContainText('Eclipse')
+  await expect(sire.getByRole('heading', { level: 3 })).toContainText(
+    'Bold Stripe + Eclipse',
+  )
+  await sire
+    .getByRole('button', { name: 'Remove Sire Eclipse', exact: true })
+    .click()
+  await expect(sire.locator('.cartoon-art')).toHaveAttribute(
+    'data-eyes',
+    'slit',
+  )
+})
+
+test('combination text, albino strain choice and dominant scenarios work in the main controls', async ({
+  page,
+}) => {
+  await page.goto('/')
+  const sire = page.getByRole('region', { name: 'Sire parent' })
+  await sire.getByLabel('Sire morph search').fill('Black Night het Tremper')
+  await sire
+    .getByRole('button', { name: 'Review combination / custom label' })
+    .click()
+  await sire.getByRole('button', { name: 'Confirm recognized traits' }).click()
+  await expect(sire.locator('.trait-chips')).toContainText('het (carrier)')
+  await expect(sire.locator('.cartoon-art')).toHaveAttribute(
+    'data-body',
+    'melanistic',
+  )
+  await sire.getByLabel('Sire morph search').fill('Sunglow')
+  await sire
+    .locator('.morph-options button')
+    .filter({ has: page.getByText('Sunglow', { exact: true }) })
+    .click()
+  await sire.locator('#Sire-albino-strain').selectOption('bell')
+  await expect(sire.locator('.trait-chips')).toContainText('Bell Albino')
+  await expect(sire.locator('.advanced-fields')).toHaveCount(0)
+  await sire.getByLabel('Sire morph search').fill('White & Yellow')
+  await sire
+    .locator('.morph-options button')
+    .filter({ has: page.getByText('White & Yellow', { exact: true }) })
+    .click()
+  await sire.locator('#Sire-wy-scenario').selectOption('1')
+  await page
+    .getByRole('button', { name: 'Calculate offspring', exact: true })
+    .click()
+  await expect(
+    page
+      .getByRole('article', { name: 'White & Yellow probabilities' })
+      .locator('dd'),
+  ).toHaveText(['50%', '50%'])
 })

@@ -1,0 +1,70 @@
+/* Light colors use the original stylesheet's fallbacks. Dark colors share a
+   semantic palette; gecko artwork and probability-chart colors stay intact. */
+:root {
+  color-scheme: light;
+}
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --green: #acd9b9;
+  --ink: #e5eee4;
+  --muted: #b9c9bc;
+  --border: #3e5144;
+  --cream: #111b16;
+  --surface: #1b2820;
+  --surface-soft: #24372b;
+  --surface-warm: #352e26;
+  --surface-selected: #314d3a;
+  --text-strong: #e5eee4;
+  --text-secondary: #b9c9bc;
+  --text-accent: #acd9b9;
+  --edge: #3e5144;
+  --on-accent: #13271b;
+  --accent-hover: #c3e7cd;
+  --focus: #c3e7cd;
+  --warning-bg: #3b2b21;
+  --warning-text: #f1c7a3;
+  --warning-edge: #91684c;
+  --notice-bg: #363221;
+  --notice-text: #e6d79e;
+  --notice-edge: #807347;
+  --art-gold: #2e3021;
+  --art-sage: #24372b;
+  --art-lilac: #302d3c;
+  --art-glow: #2d3a28;
+  --art-glow-warm: #3c3425;
+}
+.theme-toggle {
+  order: 2;
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  border: 1px solid var(--border);
+  color: var(--green);
+}
+.theme-toggle[aria-pressed='true'] {
+  background: var(--surface-selected);
+}
+.header-inner nav {
+  margin-left: auto;
+}
+.header-inner .mobile-menu {
+  order: 3;
+}
+@media (max-width: 760px) {
+  .site-header .header-inner {
+    gap: 8px;
+  }
+  .theme-toggle {
+    margin-left: auto;
+  }
+}
+@media (max-width: 360px) {
+  .site-header .header-inner {
+    padding: 0 12px;
+    gap: 5px;
+  }
+  .header-inner .brand {
+    font-size: 19px;
+    gap: 8px;
+  }
+}

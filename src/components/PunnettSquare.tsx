@@ -3,7 +3,12 @@ import { Grid2X2 } from 'lucide-react'
 import type { Pairing, Genotype } from '../genetics/traits'
 import { genotypeLabel } from '../genetics/traits'
 import type { LocusResult } from '../genetics/inference'
-import { distribution, gametes, nonVisualCarrier } from '../genetics/inference'
+import {
+  distribution,
+  gametes,
+  nonVisualCarrier,
+  stateForCalculation,
+} from '../genetics/inference'
 import { percent } from '../genetics/probability'
 export default function PunnettSquare({
   pair,
@@ -16,8 +21,8 @@ export default function PunnettSquare({
   const result = loci.find((l) => l.trait.id === selected) ?? loci[0]
   if (!result) return null
   const { trait, distribution: offspring } = result
-  const a = distribution(pair.sire.loci[trait.id])!,
-    b = distribution(pair.dam.loci[trait.id])!
+  const a = distribution(stateForCalculation(pair, 'sire', trait.id))!,
+    b = distribution(stateForCalculation(pair, 'dam', trait.id))!
   const paternal = gametes(a),
     maternal = gametes(b)
   const carrier =

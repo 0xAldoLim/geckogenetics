@@ -12,8 +12,10 @@ import {
   Leaf,
   Link,
   Menu,
+  Moon,
   RotateCcw,
   ShieldCheck,
+  Sun,
   Trash2,
   X,
 } from 'lucide-react'
@@ -51,11 +53,29 @@ export default function App() {
   const [notice, setNotice] = useState('')
   const [saved, setSaved] = useState<SavedPair[]>([])
   const [mobileNav, setMobileNav] = useState(false)
+  const [theme, setTheme] = useState<'light' | 'dark'>(() =>
+    document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light',
+  )
   const [shareLink, setShareLink] = useState('')
   const [activePreset, setActivePreset] = useState('snow')
   const [observationResult, setObservationResult] = useState('')
   const notifyTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const dirty = JSON.stringify(pair) !== JSON.stringify(calculated)
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme
+    document
+      .querySelector('meta[name="theme-color"]')
+      ?.setAttribute('content', theme === 'dark' ? '#111b16' : '#214d39')
+  }, [theme])
+  function toggleTheme() {
+    const next = theme === 'dark' ? 'light' : 'dark'
+    setTheme(next)
+    try {
+      localStorage.setItem('geckogenetics.theme', next)
+    } catch {
+      // The toggle still works when browser storage is unavailable.
+    }
+  }
   function notify(message: string) {
     setNotice(message)
     if (notifyTimer.current) clearTimeout(notifyTimer.current)
@@ -204,6 +224,15 @@ export default function App() {
             </span>
           </a>
           <button
+            className="theme-toggle icon-button"
+            aria-label="Dark mode"
+            aria-pressed={theme === 'dark'}
+            title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+            onClick={toggleTheme}
+          >
+            {theme === 'dark' ? <Sun size={19} /> : <Moon size={19} />}
+          </button>
+          <button
             className="mobile-menu icon-button"
             onClick={() => setMobileNav(!mobileNav)}
             aria-label="Toggle navigation"
@@ -318,6 +347,7 @@ export default function App() {
                       sire: blankParent(),
                       dam: blankParent(),
                       observed: '',
+                      assumeUnlisted: true,
                     }
                     updatePair(next)
                     setCalculated(next)
@@ -369,6 +399,9 @@ export default function App() {
                       Sunglow × SHTCT · dam het Tremper
                     </option>
                     <option value="labs">Gecko Labs · Tremper / Eclipse</option>
+                    <option value="black-night">
+                      Black Night × Black Night het Tremper
+                    </option>
                   </select>
                   <ChevronDown size={15} />
                 </label>
@@ -397,6 +430,23 @@ export default function App() {
                 </button>
               </div>
             </div>
+            <div className="estimate-options">
+              <label>
+                <input
+                  type="checkbox"
+                  checked={pair.assumeUnlisted === true}
+                  onChange={(e) =>
+                    updatePair({ ...pair, assumeUnlisted: e.target.checked })
+                  }
+                />
+                Assume unlisted genes are not carried
+              </label>
+              <p>
+                Used for a standard pairing estimate. Add known hets above. Turn
+                this off if unlisted status is unknown; an explicitly unknown
+                entry always stays unknown.
+              </p>
+            </div>
             {shareLink && (
               <label className="share-output">
                 Shareable link · includes evidence notes
@@ -411,8 +461,8 @@ export default function App() {
             <div className="science-note">
               <ShieldCheck size={17} />
               <p>
-                A prediction is only as good as the genetics you know. Hidden
-                traits stay unknown until supported by evidence.
+                Results use the traits and assumptions you select. Breeder notes
+                are optional; appearance alone cannot identify hidden genes.
               </p>
               <button onClick={() => navigate('learn')}>
                 How it works <ArrowUpRightIcon />

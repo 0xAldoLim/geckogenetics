@@ -46,6 +46,7 @@ const parent = z
 export const pairingSchema = z
   .object({
     version: z.literal(1),
+    assumeUnlisted: z.boolean().optional(),
     sire: parent,
     dam: parent,
     observed: z.string().max(500),
