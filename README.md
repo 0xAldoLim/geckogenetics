@@ -51,6 +51,10 @@ Saved pairings live in this browser’s local storage. Clearing browser data rem
 
 ## Run it yourself
 
+On Windows, after building once, double-click **Start-GeckoGenetics.cmd** to start the local website and open your browser. The launcher reuses a running GeckoGenetics preview, starts one if needed, and chooses another local port if a different app is using the usual address. It runs independently of a terminal or Codex chat. After restarting your computer, double-click it again. The printed address works on that computer while its local server runs.
+
+The local ZIP download includes the production website and launcher; it needs Node.js but does not need a dependency install. Extract the ZIP before opening the launcher.
+
 Install [Node.js 24 LTS](https://nodejs.org/) and [pnpm](https://pnpm.io/installation), then:
 
 ```sh
@@ -68,6 +72,7 @@ pnpm exec playwright install chromium
 pnpm test:e2e                     # Desktop and mobile browser tests
 pnpm build                       # Production website in dist/
 pnpm preview                     # Preview the production build
+node scripts/start-preview.mjs   # Start/reuse the local website in the background
 ```
 
 Deploy `dist/` to any static host. Relative asset paths support a repository subdirectory; pairing links use a URL fragment, so no application server is required. GitHub Actions runs the checks and uploads a production build for each push.
