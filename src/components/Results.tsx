@@ -17,7 +17,12 @@ import {
 } from '../genetics/inference'
 import { percent, roundedPercentages, sum } from '../genetics/probability'
 import MorphIllustration from './MorphIllustration'
-import { appearanceFromGenotypes } from '../genetics/appearance'
+import { offspringAppearanceExamples } from '../genetics/appearance'
+import {
+  familyLines,
+  outcomeName,
+  visibleTraitNames,
+} from '../genetics/result-presentation'
 import PunnettSquare from './PunnettSquare'
 const colors = [
   '#d7b55b',
@@ -35,7 +40,8 @@ export function resultSummary(pair: Pairing) {
     'GeckoGenetics pairing',
     `${pair.sire.name || pair.sire.morph} × ${pair.dam.name || pair.dam.morph}`,
     ...groupOutcomes(result.outcomes, 'genotype').map(
-      (g) => `${percent(g.probability)} ${g.title}`,
+      (g) =>
+        `${percent(g.probability)} ${outcomeName(g.title, familyLines(pair), visibleTraitNames(result.loci))}`,
     ),
     `Modeled loci: ${result.loci.map((l) => l.trait.name).join(', ') || 'none'}. Unknown active loci: ${result.unknown.map((t) => t.name).join(', ') || 'none'}.`,
     `Possible-het assumptions: ${result.possible.join(', ') || 'none'}.`,
@@ -74,7 +80,7 @@ export default function Results({
   const result = calculate(pair),
     groups = groupOutcomes(result.outcomes, view),
     rounded = roundedPercentages(groups.map((g) => g.probability))
-  const lineage = [...new Set([...pair.sire.lineage, ...pair.dam.lineage])]
+  const lineage = familyLines(pair)
   const unmodeledLabels = [
     ...new Set([...pair.sire.labels, ...pair.dam.labels]),
   ].filter(
@@ -85,9 +91,7 @@ export default function Results({
       ),
   )
   const displayTitle = (title: string) =>
-    lineage.length
-      ? title.replace('Normal at modeled loci', 'No visual single-gene traits')
-      : title
+    outcomeName(title, lineage, visibleTraitNames(result.loci))
   const chartGroups =
     groups.length > 8
       ? [
@@ -130,10 +134,9 @@ export default function Results({
         <div className="notice">
           <Info size={18} />
           <p>
-            Recorded labels outside the genetic model:{' '}
-            <strong>{unmodeledLabels.join(', ')}</strong>. They do not enter the
-            percentages. Results cover only the modeled loci; interactions with
-            these labels and the final appearance remain unpredicted.
+            Also recorded: <strong>{unmodeledLabels.join(', ')}</strong>. We
+            don’t have a reliable percentage for these labels. They stay with
+            your pairing, but the final look can vary.
           </p>
         </div>
       )}
@@ -174,10 +177,9 @@ export default function Results({
               {result.unknown.map((t) => t.name).join(', ')}.
             </strong>
             <p>
-              One parent’s status is unknown. Add its carrier trait or use the
-              unlisted-gene assumption for a scenario estimate. Explicitly
-              unknown entries can be changed in the optional settings. These
-              genes are excluded from the percentages below.
+              We need to know whether each parent shows or carries these traits.
+              Update the parent’s selection or optional settings. The results
+              below cover the traits we can calculate.
             </p>
           </div>
         </div>
@@ -197,20 +199,51 @@ export default function Results({
           </p>
         </div>
       )}
+      {lineage.length > 0 && !result.blocked && (
+        <div className="family-summary">
+          <Leaf size={23} aria-hidden="true" />
+          <div>
+            <strong>{lineage.join(' + ')} stays in the family.</strong>
+            <p>
+              {lineage.every(
+                (line) =>
+                  pair.sire.lineage.includes(line) &&
+                  pair.dam.lineage.includes(line),
+              )
+                ? 'Both parents have this family background.'
+                : 'The young share their parents’ color and pattern backgrounds.'}{' '}
+              Shade and markings can vary.{' '}
+              {groups.length > 0
+                ? 'The percentages below apply to the named traits and carriers—not to how dark or colorful a baby will be.'
+                : 'There is no reliable percentage for exactly how the young will look.'}
+            </p>
+          </div>
+        </div>
+      )}
+      {!groups.length && lineage.length > 0 && !result.blocked && (
+        <article className="family-only-result">
+          <h3>{displayTitle('Normal at modeled loci')}</h3>
+          <OffspringExamples genotypes={{}} lineage={lineage} />
+          <p>
+            Color and pattern examples only. A baby may look different from
+            either example.
+          </p>
+        </article>
+      )}
       {groups.length > 0 && (
         <>
           {result.assumed.length > 0 && (
             <div className="notice calculation-assumptions">
               <Info size={18} />
               <p>
-                <strong>Estimate assumption:</strong>{' '}
+                <strong>For this estimate:</strong>{' '}
                 {result.assumed
                   .map(
                     ({ parent, trait }) =>
-                      `${parent} is not carrying ${trait.name}`,
+                      `${parent === 'Sire' ? 'Male parent' : 'Female parent'} ${trait.inheritance === 'recessive' ? 'does not carry' : 'does not have'} ${trait.name}`,
                   )
                   .join('; ')}
-                . Add a het if this differs from your records.
+                . Change the parent’s traits if your records differ.
               </p>
             </div>
           )}
@@ -219,8 +252,8 @@ export default function Results({
               const entries =
                 trait.inheritance === 'recessive'
                   ? [
-                      { label: `Visual ${trait.name}`, chance: d[2] },
-                      { label: 'Het (carrier)', chance: d[1] },
+                      { label: `Shows ${trait.name}`, chance: d[2] },
+                      { label: 'Carries it (het)', chance: d[1] },
                       { label: 'Not carrying', chance: d[0] },
                     ]
                   : trait.inheritance === 'dominant'
@@ -228,7 +261,13 @@ export default function Results({
                         { label: trait.name, chance: d[1].add(d[2]) },
                         { label: 'Without this trait', chance: d[0] },
                       ]
-                    : d.map((chance, i) => ({ label: trait.visual[i], chance }))
+                    : d.map((chance, i) => ({
+                        label:
+                          trait.id === 'snow' && i === 0
+                            ? 'Without Mack Snow'
+                            : trait.visual[i],
+                        chance,
+                      }))
               return (
                 <article
                   key={trait.id}
@@ -249,9 +288,9 @@ export default function Results({
           </div>
           <div className="results-toolbar">
             <span className="model-status">
-              <CheckCheck size={15} /> {result.loci.length} modeled{' '}
-              {result.loci.length === 1 ? 'locus' : 'loci'} <span>·</span>{' '}
-              {groups.length} possible outcomes
+              <CheckCheck size={15} /> {result.loci.length}{' '}
+              {result.loci.length === 1 ? 'trait' : 'traits'} calculated{' '}
+              <span>·</span> {groups.length} possible results
             </span>
             <div className="segmented" aria-label="Outcome view">
               <button
@@ -259,14 +298,14 @@ export default function Results({
                 aria-pressed={view === 'phenotype'}
                 onClick={() => setView('phenotype')}
               >
-                By appearance
+                Simple results
               </button>
               <button
                 className={view === 'genotype' ? 'active' : ''}
                 aria-pressed={view === 'genotype'}
                 onClick={() => setView('genotype')}
               >
-                By genotype
+                Genetics details
               </button>
             </div>
           </div>
@@ -275,7 +314,9 @@ export default function Results({
               className="probability-bar"
               role="img"
               aria-label={chartGroups
-                .map((g) => `${g.title} ${percent(g.probability)}`)
+                .map(
+                  (g) => `${displayTitle(g.title)} ${percent(g.probability)}`,
+                )
                 .join(', ')}
             >
               {chartGroups.map((g, i) => (
@@ -285,7 +326,7 @@ export default function Results({
                     width: `${g.probability.value * 100}%`,
                     background: colors[i % colors.length],
                   }}
-                  title={`${g.title}: ${percent(g.probability)}`}
+                  title={`${displayTitle(g.title)}: ${percent(g.probability)}`}
                 >
                   {g.probability.value >= 0.12 && percent(g.probability)}
                 </div>
@@ -307,10 +348,9 @@ export default function Results({
                   <span className="outcome-number">
                     POSSIBILITY {String(i + 1).padStart(2, '0')}
                   </span>
-                  <MorphIllustration
-                    appearance={appearanceFromGenotypes(
-                      g.outcomes[0].genotypes,
-                    )}
+                  <OffspringExamples
+                    genotypes={g.outcomes[0].genotypes}
+                    lineage={lineage}
                   />
                   <span
                     className="probability-badge"
@@ -320,24 +360,12 @@ export default function Results({
                   </span>
                 </div>
                 <div className="offspring-body">
-                  <h3>
-                    {g.title === 'Normal at modeled loci' &&
-                    !lineage.length &&
-                    result.loci.length === 1 &&
-                    result.loci[0].trait.id === 'snow'
-                      ? 'Normal / Wild Type'
-                      : displayTitle(g.title)}
-                  </h3>
+                  <h3>{displayTitle(g.title)}</h3>
                   <span className="outcome-category">
-                    {g.outcomes.length > 1
-                      ? `${g.outcomes.length} underlying genotypes`
-                      : 'Calculated genotype'}
+                    {lineage.length
+                      ? 'Family shade and markings can vary'
+                      : 'Chance for each egg'}
                   </span>
-                  <p>
-                    {g.outcomes.length === 1
-                      ? genotypeText(g.outcomes[0])
-                      : 'Grouped by expected expression; hidden carrier status varies.'}
-                  </p>
                   <div className="carrier-list">
                     {traits
                       .filter(
@@ -350,24 +378,38 @@ export default function Results({
                         return carrier.n ? (
                           <span key={t.id}>
                             <DnaIcon small />
-                            {percent(carrier)}{' '}
                             {carrier.value === 1
-                              ? 'confirmed het'
-                              : 'possible het'}{' '}
-                            {t.name} <small>(within this group)</small>
+                              ? `All carry ${t.name} (het)`
+                              : `${percent(carrier)} may carry ${t.name} (possible het)`}
+                            {carrier.value !== 1 && (
+                              <small>among these offspring</small>
+                            )}
                           </span>
                         ) : null
                       })}
                   </div>
                   {lineage.length > 0 && (
-                    <p className="small muted">
-                      Lineage: {lineage.join(', ')}. Expression varies.
-                    </p>
+                    <div
+                      className="offspring-family-tags"
+                      aria-label="Family lines"
+                    >
+                      {lineage.map((line) => (
+                        <span key={line}>
+                          <Leaf size={12} aria-hidden="true" />
+                          {line} line
+                        </span>
+                      ))}
+                    </div>
                   )}
                   <details className="outcome-detail">
                     <summary>
-                      Inheritance breakdown <span>+</span>
+                      Why this result? <span>+</span>
                     </summary>
+                    <p>
+                      {g.outcomes.length > 1
+                        ? `${g.outcomes.length} genetic combinations are included in this result.`
+                        : genotypeText(g.outcomes[0])}
+                    </p>
                     {g.outcomes.map((o, j) => (
                       <div key={j}>
                         <b>{percent(o.probability)} of all offspring</b>
@@ -396,21 +438,21 @@ export default function Results({
             </button>
           )}
           <p className="illustration-note">
-            <Info size={13} /> Illustrative appearance, not guaranteed
-            phenotype. Percentages are per egg, not a promise for any clutch.
+            <Info size={13} /> Pictures are examples, not exact predictions.
+            Each egg has its own chance; a clutch may have different results.
           </p>
           <div className="assumptions-strip">
             <span>
-              <CheckCheck size={15} /> Conditional on entered genotypes
+              <CheckCheck size={15} /> Based on the parent details you entered
             </span>
             <span>
-              <DnaIcon small /> Independent assortment assumed
+              <DnaIcon small /> Trait chances calculated separately
             </span>
             <span>
               <Info size={15} />{' '}
               {pair.assumeUnlisted
-                ? 'Unlisted active genes assumed not carried'
-                : 'Unspecified loci remain unknown'}
+                ? 'Unlisted hidden traits assumed absent'
+                : 'Unlisted traits stay unknown'}
             </span>
           </div>
           {result.possible.length > 0 && (
@@ -429,16 +471,16 @@ export default function Results({
           <Leaf size={24} />
         </div>
         <div>
-          <span className="eyebrow">BEYOND THE PUNNETT SQUARE</span>
+          <span className="eyebrow">THE FAMILY BACKGROUND</span>
           <h3>
             {lineage.length
-              ? `${lineage.join(' + ')} lineage`
-              : 'Color & pattern lineage'}
+              ? `${lineage.join(' + ')} family lines`
+              : 'Color & pattern lines'}
           </h3>
           <p>
             {lineage.length
-              ? 'Offspring inherit ancestry from these breeding lines. Exact darkness, color intensity, pattern, and quality vary; there is no validated single-gene percentage for them.'
-              : 'Add line-bred traits to either parent to explore their influence on color and pattern.'}
+              ? 'These names stay in your results because they describe the parents’ family background. Young from the same parents can have different shades and markings.'
+              : 'Add a color or pattern line to either parent to keep it visible in the results.'}
           </p>
           <div className="lineage-results">
             {lineage.map((l) => (
@@ -451,16 +493,16 @@ export default function Results({
                   {pair.sire.lineage.includes(l) && pair.dam.lineage.includes(l)
                     ? 'Both parents'
                     : pair.sire.lineage.includes(l)
-                      ? 'Sire ancestry'
-                      : 'Dam ancestry'}
+                      ? 'Male parent'
+                      : 'Female parent'}
                 </small>
               </div>
             ))}
           </div>
           <p className="small muted">
             {lineage.length && !result.loci.length && !result.unknown.length
-              ? 'This pairing is valid. Add a het or a single-gene trait to calculate carrier and visual probabilities.'
-              : 'The percentages above describe the modeled genes. They do not measure the chance of a particular line-bred shade.'}
+              ? 'This pairing is ready. Add any known hets if you also want to calculate hidden-trait chances.'
+              : 'The percentages describe specific traits, not a guaranteed shade or quality.'}
           </p>
         </div>
         <Sparkles className="lineage-sparkle" size={30} />
@@ -474,6 +516,37 @@ export default function Results({
         />
       </details>
     </section>
+  )
+}
+function OffspringExamples({
+  genotypes,
+  lineage,
+}: {
+  genotypes: Parameters<typeof offspringAppearanceExamples>[0]
+  lineage: ReturnType<typeof familyLines>
+}) {
+  const examples = offspringAppearanceExamples(genotypes, lineage)
+  return (
+    <div
+      className={`offspring-examples ${examples.length > 1 ? 'multiple-examples' : ''}`}
+    >
+      {examples.map((appearance, i) => (
+        <figure key={i}>
+          <MorphIllustration appearance={appearance} />
+          {examples.length > 1 && (
+            <figcaption>
+              {examples[1].body === 'melanistic'
+                ? i === 0
+                  ? 'Lighter example'
+                  : 'Darker example'
+                : i === 0
+                  ? 'Trait example'
+                  : 'Family line example'}
+            </figcaption>
+          )}
+        </figure>
+      ))}
+    </div>
   )
 }
 function DnaIcon({ small = false }: { small?: boolean }) {

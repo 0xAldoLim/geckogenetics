@@ -38,3 +38,7 @@ Each variant used the generated normal character as an edit target, with these i
 - **Local features:** Baldy/white-face and carrot-tail descriptions use localized head/tail layers. They do not create Mendelian loci or expression percentages.
 - **Color:** Color palettes are chosen separately. Warm-region tinting preserves light pied regions. A generic trade label with no verified appearance receives an explicit general-species-guide description.
 - **Limits:** Eye expression, patch placement, spotting, intensity, age-related changes and interacting traits vary in real animals. An overlay or asset is a visual explanation, never a clinical or exact offspring prediction. Unknown line-bred expression is not assigned to a predicted hatchling merely because a parent has that ancestry.
+
+## Family-line examples
+
+Offspring cards retain the selected family-line names. `offspringAppearanceExamples` shows the calculated-trait guide alongside a separate, unweighted family-line example when a documented visual descriptor changes the illustration. Black Night uses labeled lighter/darker examples; neither image receives an expression probability. A general project name such as Cotton does not gain an invented appearance. Both examples retain calculated eye traits and established Super Snow/patternless features; a Black Night guide cannot introduce black pigment into a calculated albino. Carrier alleles never change the eyes or become visual albino examples. Pairings containing only family lines show an example card without a percentage badge.

@@ -9,7 +9,7 @@ Explore what a leopard gecko pairing could produce—and understand why. GeckoGe
 ## Meet your next discovery
 
 - **Pair two geckos.** Choose each morph, add visible traits, then select any hidden carrier traits (hets). Combine traits freely; breeder notes and detailed settings are optional.
-- **See the possibilities.** Explore offspring cards, a probability chart, and an interactive Punnett square. Switch between appearance and genotype views without losing carrier information.
+- **See the possibilities.** Start with Simple results: clear offspring names and plain-language carrier notes. Open Genetics details or “Why this result?” when you want the DNA notation and inheritance breakdown.
 - **Understand the color story.** Keep Tangerine, Super Hypo, Carrot Tail, and other selected breeding lines separate from single-gene inheritance.
 - **Learn as you go.** Browse 212 indexed morph, pattern, eye-trait, breeding-line, and marketplace names. Filter by trait or source, including the Leopard Geckos London masterlist and marketplace records. Newer names such as Pied, Super Pied, Dark Tangerine, and Bojoneroko are searchable with their evidence status.
 - **See the actual feature change.** Cartoon guides use separate body, pattern, and eye features: Eclipse changes the eyes, Pied changes white patches, stripes change the markings, and hidden carrier genes do not change the drawing.
@@ -47,6 +47,8 @@ The [full marketplace audit](docs/MARKETPLACE_AUDIT.md) covers 223 product pages
 ## Good genetics starts with good records
 
 Percentages describe the chance for **each egg**, not a guaranteed clutch. Predictions depend on entered genotypes and the assumptions shown with the results.
+
+Your color and pattern lines stay visible on every offspring card. For **Black Night × Mack Snow Eclipse Black Night**, the standard estimate gives **50% with Mack Snow and 50% without it; all carry Eclipse**, assuming the first parent has neither Snow nor a hidden Eclipse copy. Both groups keep their **Black Night line** background. Lighter and darker drawings are examples, not a prediction of how many babies will be dark. The same family-line display works for Tangerine, Bold Stripe and other selected lines, including pairings with no percentage-based traits.
 
 A normal appearance cannot rule out hidden recessive alleles. The default **Assume unlisted genes are not carried** option enables standard pairing estimates without requiring detailed records for both parents. Every assumption used in an active gene calculation is shown beside the results. Turn it off to calculate from entered records only. An explicitly unknown entry always stays unknown; assumptions never rewrite parental records and are included in saved/shared pairings. Older links without this option retain their record-only behavior.
 

@@ -46,9 +46,11 @@ test('opening Snow cross, result views, and Punnett square work', async ({
     '50%',
     '25%',
   ])
-  await page.getByRole('button', { name: 'By genotype', exact: true }).click()
+  await page
+    .getByRole('button', { name: 'Genetics details', exact: true })
+    .click()
   await expect(
-    page.getByRole('button', { name: 'By genotype', exact: true }),
+    page.getByRole('button', { name: 'Genetics details', exact: true }),
   ).toHaveAttribute('aria-pressed', 'true')
   await page.locator('.punnett-panel > summary').click()
   await expect(page.locator('.punnett-table')).toBeVisible()
@@ -71,7 +73,7 @@ test('Sunglow scenarios update independently of line-bred ancestry', async ({
   await expect(page.locator('.offspring-card')).toHaveCount(1)
   await expect(page.locator('.probability-badge')).toHaveText(['100%'])
   await expect(page.locator('.carrier-list')).toContainText(
-    '100% confirmed het Tremper Albino',
+    'All carry Tremper Albino (het)',
   )
   await expect(page.locator('.lineage-results')).toContainText('Carrot Tail')
   await page.getByLabel('Educational pairing preset').selectOption('sunglow-b')
@@ -175,10 +177,14 @@ test('reviewed shop pairings calculate multi-gene and conditional TUG scenarios'
   await expect(
     page.getByRole('article', { name: 'Eclipse probabilities' }).locator('dd'),
   ).toHaveText(['25%', '50%', '25%'])
-  await page.getByRole('button', { name: 'By genotype', exact: true }).click()
+  await page
+    .getByRole('button', { name: 'Genetics details', exact: true })
+    .click()
   await expect(page.locator('.offspring-card')).toHaveCount(12)
   await examples.selectOption('market-wachi-tug')
-  await page.getByRole('button', { name: 'By appearance', exact: true }).click()
+  await page
+    .getByRole('button', { name: 'Simple results', exact: true })
+    .click()
   await expect(page.locator('.probability-badge')).toHaveText(['25%', '75%'])
   await expect(page.locator('.source-example')).toContainText(
     'explicitly assumed',
@@ -320,7 +326,7 @@ test('learning flow, result copy and keyboard access work', async ({
     .getByText('Plain-text results & assumptions', { exact: true })
     .click()
   const summary = await page.getByLabel('Plain-text results').inputValue()
-  expect(summary).toContain('25% Normal at modeled loci')
+  expect(summary).toContain('25% Normal / Wild Type')
   expect(summary).toContain('Unlisted active genes assumed not carried')
   await page.getByRole('button', { name: 'Let’s learn genetics' }).click()
   await expect(
@@ -399,11 +405,20 @@ test('hidden albino carriers retain a normal illustration', async ({
 }) => {
   await page.goto('/')
   await page.getByLabel('Educational pairing preset').selectOption('sunglow-a')
-  const offspring = page.locator('.offspring-card .cartoon-art')
+  const offspring = page.locator(
+    '.offspring-card figure:first-child .cartoon-art',
+  )
   await expect(offspring).toHaveAttribute('data-body', 'normal')
   await expect(offspring).toHaveAttribute('data-eyes', 'slit')
   await expect(offspring.locator('img')).toHaveJSProperty('complete', true)
   await expect(offspring.locator('img')).not.toHaveJSProperty('naturalWidth', 0)
+  await expect(
+    page.locator('.offspring-card .cartoon-art[data-body="albino"]'),
+  ).toHaveCount(0)
+  for (const illustration of await page
+    .locator('.offspring-card .cartoon-art')
+    .all())
+    await expect(illustration).toHaveAttribute('data-eyes', 'slit')
 })
 
 test('parent controls preserve eye patterns and apply selected body markings', async ({
@@ -504,7 +519,9 @@ test('any morph can receive hets and additional traits without opening optional 
     })
     await expect(summary.locator('dd')).toHaveText(['0%', '50%', '50%'])
     await expect(page.locator('.lineage-results')).toContainText(name)
-    await page.getByRole('button', { name: 'By genotype', exact: true }).click()
+    await page
+      .getByRole('button', { name: 'Genetics details', exact: true })
+      .click()
     await expect(page.locator('.probability-badge')).toHaveText(['50%', '50%'])
     if (!(await page.locator('.punnett-table').isVisible()))
       await page.locator('.punnett-panel > summary').click()
@@ -529,6 +546,89 @@ test('any morph can receive hets and additional traits without opening optional 
     'data-eyes',
     'slit',
   )
+})
+
+test('Black Night family stays visible in simple results with honest shade examples', async ({
+  page,
+}) => {
+  await page.goto('/')
+  for (const [role, name] of [
+    ['Sire', 'Black Night'],
+    ['Dam', 'Mack Snow Eclipse Black Night'],
+  ]) {
+    const parent = page.getByRole('region', { name: `${role} parent` })
+    await parent.getByLabel(`${role} morph search`).fill(name)
+    await parent
+      .locator('.morph-options button')
+      .filter({ has: page.getByText(name, { exact: true }) })
+      .click()
+  }
+  await page
+    .getByRole('button', { name: 'Calculate offspring', exact: true })
+    .click()
+  await expect(page.locator('.family-summary')).toContainText(
+    'Black Night stays in the family',
+  )
+  await expect(page.locator('.offspring-card h3')).toHaveText([
+    'Black Night line · without Mack Snow',
+    'Mack Snow · Black Night line',
+  ])
+  await expect(page.locator('.probability-badge')).toHaveText(['50%', '50%'])
+  for (const card of await page.locator('.offspring-card').all()) {
+    await expect(card.locator('.carrier-list')).toContainText(
+      'All carry Eclipse (het)',
+    )
+    await expect(card.locator('.offspring-family-tags')).toContainText(
+      'Black Night line',
+    )
+    await expect(
+      card.locator('.cartoon-art[data-body="melanistic"]'),
+    ).toHaveCount(1)
+    await expect(card.locator('.cartoon-art[data-eyes="slit"]')).toHaveCount(2)
+    await expect(
+      card.getByText('Lighter example', { exact: true }),
+    ).toBeVisible()
+    await expect(
+      card.getByText('Darker example', { exact: true }),
+    ).toBeVisible()
+    await expect(card.locator('.outcome-detail')).not.toHaveAttribute('open')
+  }
+  await page
+    .locator('.offspring-card')
+    .first()
+    .getByText('Why this result?', { exact: false })
+    .click()
+  await expect(
+    page.locator('.offspring-card').first().locator('.outcome-detail'),
+  ).toContainText('Eclipse: Ee')
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= innerWidth,
+    ),
+  ).toBe(true)
+  // The new family guide must remain readable in the user's dark theme too.
+  if ((await page.locator('html').getAttribute('data-theme')) !== 'dark')
+    await page.getByRole('button', { name: 'Dark mode', exact: true }).click()
+  const accessibility = await new AxeBuilder({ page })
+    .withTags(['wcag2a', 'wcag2aa'])
+    .analyze()
+  expect(accessibility.violations).toEqual([])
+  await page.getByRole('button', { name: 'Reset', exact: true }).click()
+  for (const role of ['Sire', 'Dam']) {
+    const parent = page.getByRole('region', { name: `${role} parent` })
+    await parent.getByLabel(`${role} morph search`).fill('Black Night')
+    await parent
+      .locator('.morph-options button')
+      .filter({ has: page.getByText('Black Night', { exact: true }) })
+      .click()
+  }
+  await page
+    .getByRole('button', { name: 'Calculate offspring', exact: true })
+    .click()
+  await expect(page.locator('.family-only-result')).toContainText(
+    'Black Night line offspring',
+  )
+  await expect(page.locator('.probability-badge')).toHaveCount(0)
 })
 
 test('combination text, albino strain choice and dominant scenarios work in the main controls', async ({

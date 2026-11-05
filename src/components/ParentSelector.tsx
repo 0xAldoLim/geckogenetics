@@ -339,7 +339,9 @@ export default function ParentSelector({
             role={selectedMorph.risk ? 'alert' : undefined}
           >
             {selectedMorph.risk && <strong>Welfare concern. </strong>}
-            {selectedMorph.note}
+            {parent.lineage.length && !selectedMorph.risk
+              ? `${parent.lineage.join(' + ')} stays in the family. The young’s shade and markings can vary. Add any known hidden traits below.`
+              : selectedMorph.note}
           </p>
         )}
         <div className="trait-chips">
@@ -397,7 +399,7 @@ export default function ParentSelector({
           {!active.length && (
             <span className="muted small">
               {parent.lineage.length
-                ? 'Breeding line selected. Add any known hets below.'
+                ? 'Color or pattern line selected. It will appear in your results.'
                 : 'Add any known carrier traits below.'}
             </span>
           )}

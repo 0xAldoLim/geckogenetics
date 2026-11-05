@@ -2,20 +2,21 @@
 
 GeckoGenetics is a static React application. It needs no server, API key, database, account, or inference service.
 
-| Area                           | Responsibility                                                                                                                             |
-| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------ |
-| `src/genetics/traits.ts`       | Species-specific locus definitions, allele notation, explicit genotype states, lineage names, parent and pairing types                     |
-| `src/genetics/probability.ts`  | Reduced BigInt fractions, exact operations, presentation rounding                                                                          |
-| `src/genetics/inference.ts`    | Parental genotype mixtures, weighted gametes, per-locus crossing, joint enumeration, phenotype grouping, conditional carrier probabilities |
-| `src/genetics/parser.ts`       | Conservative alias and shorthand recognition; no state mutation                                                                            |
-| `src/genetics/observations.ts` | Compare recognized observations with predictions without parental inference                                                                |
-| `src/data/morphs.ts`           | Morph presets, aliases, combination components, reference-only entries, source/evidence annotations, welfare labels                        |
-| `src/data/references.ts`       | Source records shared by the catalog and educational pages                                                                                 |
-| `src/lib/storage.ts`           | Strict Zod schemas, validated URL-fragment encoding, Unicode round trips, local storage validation                                         |
-| `src/components/`              | Parent controls, cartoon artwork with local feature overlays, outcome cards/charts, and weighted Punnett square                            |
-| `src/pages/`                   | Searchable encyclopedia and genetics guide                                                                                                 |
-| `src/App.tsx`                  | App navigation, working vs. calculated pairing, presets, saves, sharing, observation text                                                  |
-| `src/tests/`, `e2e/`           | Independent genetics tests, exhaustive probability checks, desktop/mobile flows                                                            |
+| Area                                  | Responsibility                                                                                                                             |
+| ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| `src/genetics/traits.ts`              | Species-specific locus definitions, allele notation, explicit genotype states, lineage names, parent and pairing types                     |
+| `src/genetics/probability.ts`         | Reduced BigInt fractions, exact operations, presentation rounding                                                                          |
+| `src/genetics/inference.ts`           | Parental genotype mixtures, weighted gametes, per-locus crossing, joint enumeration, phenotype grouping, conditional carrier probabilities |
+| `src/genetics/result-presentation.ts` | Family-aware result names and plain-language visible-trait labels; no probability changes                                                  |
+| `src/genetics/parser.ts`              | Conservative alias and shorthand recognition; no state mutation                                                                            |
+| `src/genetics/observations.ts`        | Compare recognized observations with predictions without parental inference                                                                |
+| `src/data/morphs.ts`                  | Morph presets, aliases, combination components, reference-only entries, source/evidence annotations, welfare labels                        |
+| `src/data/references.ts`              | Source records shared by the catalog and educational pages                                                                                 |
+| `src/lib/storage.ts`                  | Strict Zod schemas, validated URL-fragment encoding, Unicode round trips, local storage validation                                         |
+| `src/components/`                     | Parent controls, cartoon artwork with local feature overlays, outcome cards/charts, and weighted Punnett square                            |
+| `src/pages/`                          | Searchable encyclopedia and genetics guide                                                                                                 |
+| `src/App.tsx`                         | App navigation, working vs. calculated pairing, presets, saves, sharing, observation text                                                  |
+| `src/tests/`, `e2e/`                  | Independent genetics tests, exhaustive probability checks, desktop/mobile flows                                                            |
 
 ## Data flow
 
@@ -44,3 +45,5 @@ The app uses system fonts, original cartoon WebP illustrations, and bundled icon
 `pnpm test:e2e` checks desktop and mobile Chromium for the primary controls, presets, Punnett expansion, genotype editing, saved/shared pairings, ambiguous input, welfare behavior, corrupt storage, responsive overflow, and runtime errors. `pnpm build` runs strict TypeScript checks before producing `dist/`. CI uploads the static production build and browser diagnostics as artifacts.
 
 The shared `parentFromLabel` resolver powers interactive review and marketplace regressions. It scopes het qualifiers in input order, holds unknown probabilities, checks compound-het assumptions and separates lineage from allele evidence. `marketplace-listings.json` records a dated source audit, including unsupported species and accessories; it is test data and is not bundled into the app. Four curated source-linked pairings are bundled separately. Tests cover every recorded leopard-gecko parent pair and all 5,760 advertised male/female listing combinations under explicit test scenarios.
+
+Simple results keep family names visible on each card and in the chart. DNA notation stays inside an expandable explanation; Genetics details separates underlying genotypes. `offspringAppearanceExamples` supplies unweighted visual examples of family color/pattern variation while preserving calculated albino, eye and patternless features. These guides never enter `calculate` or create an expression probability. Family-only pairings receive a guide without a percentage badge. Regression checks cover the reported Black Night × Mack Snow Eclipse Black Night pairing, other selected lines and dark-mode readability.

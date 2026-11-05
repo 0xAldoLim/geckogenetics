@@ -1,4 +1,4 @@
-import type { Genotype, Parent } from './traits'
+import type { Genotype, Parent, LineTrait } from './traits'
 import { morphs } from '../data/morphs'
 
 export type BodyColor =
@@ -252,6 +252,31 @@ export function appearanceForParent(parent: Parent): VisualProfile {
   }
   if ('wy' in genotypes) result.whiteSides = genotypes.wy > 0
   return result
+}
+
+/** Unweighted illustration examples, never a prediction of line expression. */
+export function offspringAppearanceExamples(
+  genotypes: Record<string, Genotype>,
+  lines: readonly LineTrait[],
+): VisualProfile[] {
+  const base = appearanceFromGenotypes(genotypes)
+  const example = { ...base }
+  const modifiers = lines.map(appearanceForMorph)
+  const dark = modifiers.find((m) => m.body === 'melanistic')
+  const color = dark ?? modifiers.find((m) => m.body !== 'normal')
+  // Albino expression and calculated eye/pattern features must stay intact.
+  if (color && base.body !== 'albino') example.body = color.body
+  for (const modifier of modifiers) {
+    if (base.pattern === 'spotted' && modifier.pattern !== 'spotted')
+      example.pattern = modifier.pattern
+    if (base.pattern !== 'patternless') {
+      if (modifier.head !== 'spotted') example.head = modifier.head
+      if (modifier.tail !== 'banded') example.tail = modifier.tail
+    }
+  }
+  return JSON.stringify(base) === JSON.stringify(example)
+    ? [base]
+    : [base, example]
 }
 
 export type IllustrationAsset =
