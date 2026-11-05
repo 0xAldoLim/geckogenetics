@@ -6,6 +6,11 @@ export function compareObservation(pair: Pairing, input: string): string {
     result = calculate(pair)
   if (result.blocked)
     return 'Comparison withheld because this pairing includes a welfare concern. No parental alleles have been inferred.'
+  if (
+    parsed.warnings.length ||
+    parsed.proposals.some((p) => p.alternatives || p.uncertain || p.needsChoice)
+  )
+    return 'Comparison is inconclusive: resolve the abbreviation, uncertain trait or possible-het probability first. No parental alleles have been inferred.'
   const requirements = parsed.proposals
     .filter((p) => !p.het)
     .flatMap((p) => Object.entries(p.morph?.loci ?? {}))

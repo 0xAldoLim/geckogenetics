@@ -34,6 +34,21 @@ const recessive = (
 })
 export const traits: Trait[] = [
   {
+    id: 'tug',
+    name: 'TUG Snow',
+    alias: 'TUG Snow',
+    inheritance: 'dominant',
+    symbol: 'U',
+    visual: ['Without TUG Snow', 'TUG Snow', 'TUG Snow'],
+    description:
+      'Originator-reported dominant snow model, with no separate super appearance.',
+    evidence:
+      'Conditional originator breeding model; copy count must be entered as a scenario',
+    caveat:
+      'The relationship to Mack Snow is not established here. TUG and Mack Snow are excluded together when both are active; no independent two-snow model is invented.',
+    refs: ['tugOrigin', 'wachi'],
+  },
+  {
     id: 'snow',
     name: 'Mack Snow',
     alias: 'MS / SS (Super Snow)',
@@ -138,6 +153,15 @@ export const lineTraits = [
   'Red Diamond',
   'Patternless Stripe',
   'Aberrant',
+  'Cotton',
+  'Sunspot',
+  'Tomato',
+  'Tomato Emerine',
+  'TOE',
+  'Choco',
+  'HG',
+  'Afghan',
+  'Patty',
 ] as const
 export type LineTrait = (typeof lineTraits)[number]
 export type Genotype = 0 | 1 | 2

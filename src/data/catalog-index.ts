@@ -39,6 +39,99 @@ const riskCombo = (name: string): Morph => ({
 
 /** A naming index is intentionally broader than the supported genetic model. */
 export const indexedMorphs: Morph[] = [
+  ...(
+    [
+      'Cotton',
+      'Sunspot',
+      'Tomato',
+      'Tomato Emerine',
+      'TOE',
+      'Choco',
+      'HG',
+      'Afghan',
+      'Patty',
+    ] as const
+  ).map((name) => ({
+    ...index(
+      name,
+      'line',
+      'Breeder/project wording observed in the reviewed HypeGecko or Wachi listings. Recorded as lineage/reference information; this label does not establish an independent gene or hidden carrier state.',
+      ['hype', 'wachi'],
+    ),
+    lineage: [name],
+  })),
+  {
+    ...index(
+      'Fire Bell',
+      'combination',
+      'Bell Albino with a selected color/project description; Fire is not an additional modeled locus.',
+      ['wachi'],
+    ),
+    loci: { bell: 2 },
+  },
+  {
+    ...index(
+      'Mack Snow Tremper',
+      'combination',
+      'Mack Snow + Tremper Albino; breeder shorthand MST is expanded for review.',
+      ['hype', 'wachi'],
+      ['MST'],
+    ),
+    loci: { snow: 1, tremper: 2 },
+  },
+  {
+    ...index(
+      'Mack Snow Eclipse',
+      'combination',
+      'Mack Snow + Eclipse; confirm breeder shorthand before applying.',
+      ['hype', 'wachi'],
+      ['MSE'],
+    ),
+    loci: { snow: 1, eclipse: 2 },
+  },
+  {
+    ...index(
+      'Super Snow Eclipse',
+      'combination',
+      'Super Snow + Eclipse; breeder shorthand SSE is expanded for review.',
+      ['hype', 'wachi'],
+      ['SSE'],
+    ),
+    loci: { snow: 2, eclipse: 2 },
+  },
+  {
+    ...index(
+      'Super Snow Eclipse Black Night',
+      'combination',
+      'Super Snow + Eclipse with Black Night ancestry. Darkness has no single-gene percentage.',
+      ['hype', 'wachi'],
+      ['SSEBN'],
+    ),
+    loci: { snow: 2, eclipse: 2 },
+    lineage: ['Black Night'],
+  },
+  {
+    ...index(
+      'Mack Snow Eclipse Black Night',
+      'combination',
+      'Mack Snow + Eclipse with Black Night ancestry. Confirm shorthand against breeder records.',
+      ['hype', 'wachi'],
+      ['MSEBN'],
+    ),
+    loci: { snow: 1, eclipse: 2 },
+    lineage: ['Black Night'],
+  },
+  {
+    ...index(
+      'Mack Snow Tremper Black Night',
+      'combination',
+      'Mack Snow + Tremper Albino with Black Night ancestry. Black Night is not another locus.',
+      ['hype'],
+      ['MSTBN'],
+    ),
+    loci: { snow: 1, tremper: 2 },
+    lineage: ['Black Night'],
+  },
   {
     name: 'Pied Galaxy',
     aliases: ['Galaxy Pied', 'Pied Total Eclipse'],

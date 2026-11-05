@@ -22,6 +22,10 @@ import {
 import { blankParent } from './genetics/traits'
 import type { Pairing } from './genetics/traits'
 import { applyMorph, morphs, preset } from './data/morphs'
+import {
+  marketplaceExamples,
+  marketplacePairing,
+} from './data/marketplace-examples'
 import { compareObservation } from './genetics/observations'
 import {
   decodePairing,
@@ -119,7 +123,9 @@ export default function App() {
     navigate('library')
   }
   function loadPreset(id: string) {
-    const next = preset(id as Parameters<typeof preset>[0])
+    const next = id.startsWith('market-')
+      ? marketplacePairing(id)
+      : preset(id as Parameters<typeof preset>[0])
     setPair(next)
     setCalculated(next)
     setActivePreset(id)
@@ -402,6 +408,13 @@ export default function App() {
                     <option value="black-night">
                       Black Night × Black Night het Tremper
                     </option>
+                    <optgroup label="Reviewed breeder examples">
+                      {marketplaceExamples.map((e) => (
+                        <option key={e.id} value={e.id}>
+                          {e.title}
+                        </option>
+                      ))}
+                    </optgroup>
                   </select>
                   <ChevronDown size={15} />
                 </label>
@@ -431,6 +444,26 @@ export default function App() {
               </div>
             </div>
             <div className="estimate-options">
+              {marketplaceExamples
+                .filter((e) => e.id === activePreset)
+                .map((e) => (
+                  <div className="source-example" key={e.id}>
+                    <strong>Reviewed breeder example</strong>
+                    <p>{e.note}</p>
+                    <div>
+                      {e.sources.map((s) => (
+                        <a
+                          key={s.url}
+                          href={s.url}
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          {s.label}
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                ))}
               <label>
                 <input
                   type="checkbox"

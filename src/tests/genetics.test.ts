@@ -199,7 +199,9 @@ describe('Exhaustive probability conservation and symmetry', () => {
         }
       })
   it('conserves probability across all eight loci', () => {
-    const loci = Object.fromEntries(traits.map((t) => [t.id, known(1)]))
+    const loci = Object.fromEntries(
+      traits.filter((t) => t.id !== 'tug').map((t) => [t.id, known(1)]),
+    )
     const r = calculate(pairing(loci, loci))
     expect(r.outcomes).toHaveLength(6561)
     expect(sum(r.outcomes.map((o) => o.probability)).exact).toBe('1/1')
@@ -222,7 +224,10 @@ describe('Aliases, imports, and observations', () => {
   it('preserves ambiguous breeder examples without guessing', () => {
     for (const text of ['MSEBN H T', 'SP PH T', 'MSEBN PH T']) {
       const p = parseShorthand(text)
-      expect(p.proposals).toEqual([])
+      expect(p.proposals.find((p) => p.token === 'T')).toMatchObject({
+        needsChoice: true,
+        morph: undefined,
+      })
       expect(p.unresolved).toContain('T')
     }
   })

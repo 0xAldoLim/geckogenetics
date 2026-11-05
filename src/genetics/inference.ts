@@ -54,6 +54,7 @@ export interface Prediction {
   possible: string[]
   blocked: boolean
   assumed: { parent: 'Sire' | 'Dam'; trait: Trait }[]
+  limitations: string[]
 }
 /** A missing entry can be an explicit scenario assumption; an unknown record cannot. */
 export function stateForCalculation(
@@ -61,6 +62,20 @@ export function stateForCalculation(
   parent: 'sire' | 'dam',
   id: string,
 ): GeneticState {
+  const animal = pair[parent]
+  const albinoIds = ['tremper', 'bell', 'rainwater']
+  const unresolvedStrain =
+    morphs.some(
+      (m) =>
+        m.ambiguous &&
+        animal.morph.toLowerCase().includes(m.name.toLowerCase()),
+    ) &&
+    !albinoIds.some((id) => {
+      const state = animal.loci[id]
+      return state?.kind === 'known' && state.copies === 2
+    })
+  if (!animal.loci[id] && albinoIds.includes(id) && unresolvedStrain)
+    return { kind: 'unknown' }
   return (
     pair[parent].loci[id] ??
     (pair.assumeUnlisted ? known(0) : { kind: 'unknown' })
@@ -70,7 +85,17 @@ export function calculate(pair: Pairing): Prediction {
   const loci: LocusResult[] = [],
     unknown: Trait[] = [],
     possible: string[] = [],
-    assumed: Prediction['assumed'] = []
+    assumed: Prediction['assumed'] = [],
+    limitations: string[] = []
+  const activeSnow = (id: string) =>
+    [pair.sire.loci[id], pair.dam.loci[id]].some(
+      (s) => s && !(s.kind === 'known' && s.copies === 0),
+    )
+  const mixedSnow = activeSnow('snow') && activeSnow('tug')
+  if (mixedSnow)
+    limitations.push(
+      'Mack Snow and TUG Snow are both entered. Their allele relationship is not established in this model, so both snow calculations are excluded; other genes can still be calculated.',
+    )
   const blocked = [
     ...pair.sire.labels,
     ...pair.dam.labels,
@@ -84,9 +109,16 @@ export function calculate(pair: Pairing): Prediction {
   )
   for (const trait of traits) {
     if (!pair.sire.loci[trait.id] && !pair.dam.loci[trait.id]) continue
+    if (mixedSnow && ['snow', 'tug'].includes(trait.id)) {
+      unknown.push(trait)
+      continue
+    }
     const a = stateForCalculation(pair, 'sire', trait.id),
       b = stateForCalculation(pair, 'dam', trait.id)
-    if (a.kind === 'unknown' && b.kind === 'unknown') continue
+    if (a.kind === 'unknown' && b.kind === 'unknown') {
+      unknown.push(trait)
+      continue
+    }
     const d = cross(a, b)
     if (!d) unknown.push(trait)
     else {
@@ -114,7 +146,7 @@ export function calculate(pair: Pairing): Prediction {
           : [],
       ),
     )
-  return { outcomes, loci, unknown, possible, blocked, assumed }
+  return { outcomes, loci, unknown, possible, blocked, assumed, limitations }
 }
 export function phenotype(outcome: Outcome): string {
   const expressed = traits
@@ -136,6 +168,7 @@ export function genotypeTitle(o: Outcome): string {
   return hets.length ? `${expressed} · het ${hets.join(' & ')}` : expressed
 }
 export interface Group {
+  key: string
   title: string
   probability: Rational
   outcomes: Outcome[]
@@ -159,6 +192,7 @@ export function groupOutcomes(
       existing.outcomes.push(o)
     } else
       groups.set(key, {
+        key,
         title: view === 'phenotype' ? phenotype(o) : genotypeTitle(o),
         probability: o.probability,
         outcomes: [o],

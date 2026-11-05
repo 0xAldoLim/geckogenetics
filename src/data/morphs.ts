@@ -3,6 +3,7 @@ import type { Genotype, LineTrait, Pairing, Parent } from '../genetics/traits'
 import type { ReferenceId } from './references'
 import { indexedMorphs } from './catalog-index'
 export interface Morph {
+  dosage?: string
   category?: 'line' | 'pattern' | 'eye' | 'combination' | 'unverified'
   name: string
   aliases: string[]
@@ -147,7 +148,8 @@ export const morphs: Morph[] = [
   },
   {
     name: 'White & Yellow',
-    aliases: ['W&Y'],
+    aliases: ['W&Y', 'WY', 'W/Y'],
+    dosage: 'wy',
     note: 'Dominant breeder model. Choose a one-copy or two-copy scenario below; appearance alone cannot distinguish them.',
   },
   {
@@ -280,9 +282,10 @@ export const morphs: Morph[] = [
   {
     name: 'TUG Snow',
     aliases: [],
-    note: 'Distinct snow line; allele relationships and quantitative expression unmodeled.',
-    refs: ['etc'],
-    status: 'Breeder-reported snow line; unmodeled',
+    dosage: 'tug',
+    note: 'Originator-reported dominant model. Choose a copy-count scenario. No Super TUG appearance is assumed; crosses with Mack Snow remain unresolved.',
+    refs: ['tugOrigin', 'wachi'],
+    status: 'Conditional originator model; dosage required',
   },
   {
     name: 'Ghost',
@@ -453,6 +456,33 @@ for (const entry of indexedMorphs) {
     indexedNames.add(entry.name.toLowerCase())
   }
 }
+const breederAliases: Record<string, string[]> = {
+  'Bold Stripe': ['BS', 'Boldstripe'],
+  Tangerine: ['Tang'],
+  Eclipse: ['Ecl', 'EC'],
+  Blizzard: ['Blizz'],
+  Emerine: ['EM'],
+  'Reverse Stripe': ['RVS'],
+  'Red Stripe': ['RS'],
+  'Super Pied': ['SPied', 'SP', 'XPied'],
+  'Diablo Blanco': ['DB'],
+}
+for (const entry of morphs)
+  if (breederAliases[entry.name])
+    entry.aliases = [
+      ...new Set([...entry.aliases, ...breederAliases[entry.name]]),
+    ]
+const aptor = morphs.find((m) => m.name === 'APTOR')!
+aptor.loci = { tremper: 2 }
+aptor.lineage = ['Tangerine', 'Patternless Stripe']
+const phantom = morphs.find((m) => m.name === 'Phantom')!
+phantom.loci = { tremper: 2 }
+phantom.dosage = 'tug'
+phantom.lineage = ['Super Hypo', 'Tangerine', 'Carrot Tail']
+phantom.refs = ['phantomOrigin', 'wachi']
+phantom.status = 'Conditional originator combination; TUG dosage required'
+phantom.note =
+  'The originator combines TUG Snow, selected Super Hypo/Carrot Tail and Tremper Albino. Choose the TUG copy-count scenario; this is not Mack Snow.'
 const londonIndex = new Set([
   'White & Yellow',
   'Enigma',
@@ -497,12 +527,13 @@ export function applyMorph(parent: Parent, morph: Morph): Parent {
   return {
     ...parent,
     morph: morph.name,
-    loci: Object.fromEntries(
-      Object.entries(morph.loci ?? {}).map(([id, copies]) => [
+    loci: Object.fromEntries([
+      ...(morph.dosage ? [[morph.dosage, { kind: 'unknown' as const }]] : []),
+      ...Object.entries(morph.loci ?? {}).map(([id, copies]) => [
         id,
         known(copies),
       ]),
-    ),
+    ]),
     lineage: [...(morph.lineage ?? [])],
     labels: [
       ...(morph.risk

@@ -5,7 +5,7 @@ const server = await createServer({
   configFile: false,
   cacheDir: '../catalog-vite-cache',
   optimizeDeps: { noDiscovery: true, include: [] },
-  server: { middlewareMode: true },
+  server: { middlewareMode: true, hmr: false },
 })
 try {
   const { morphs } = await server.ssrLoadModule('/src/data/morphs.ts')
@@ -15,7 +15,7 @@ try {
     String(value).replaceAll('|', '\\|').replaceAll('\n', ' ')
   const header = `# Genetics references and morph catalog
 
-Reviewed **26 October 2026**. This catalog has **${morphs.length} entries**, including named breeding lines, descriptive appearances, and combination morphs. It does not claim exhaustive coverage of every trade name on the web. The calculation model covers **eight loci**; catalog inclusion is not molecular confirmation or permission to assume independent inheritance.
+Reviewed **5 November 2026**. This catalog has **${morphs.length} entries**, including named breeding lines, descriptive appearances, and combination morphs. It does not claim exhaustive coverage of every trade name on the web. The calculation model covers **nine locus definitions**; catalog inclusion is not molecular confirmation or permission to assume independent inheritance. Mack Snow and TUG Snow are never combined as independent snow loci in a prediction.
 
 ## Research method and access limitations
 
@@ -37,12 +37,17 @@ The index was expanded using the requested [Leopard Geckos London masterlist](ht
 
 Pied is recorded as a pattern descriptor; a cited Pied Galaxy listing separately documents Super Snow and Eclipse. Super Pied is present in HypeGecko's public inventory, but the word Super does not establish an independent homozygous state. Dark Tangerine is independently documented in London and OnlineGeckos breeder listings; it is not automatically Black Night. Bojoneroko was searched with alternative spacing and marketplace/social queries. Only mirrored public sales text was found, so its breeder origin, unique appearance and genetics remain unverified. No associated SHTCTB, Sunglow or Tremper claim is imported into the bare name. Marketplace prices and seller contact details are not copied into the catalog. Availability changes; this is a dated index, not a live shopping feed or an exhaustive claim about every trade name.
 
+## November 2026 shop audit
+
+Opened all 223 catalog product pages across HypeGecko and Wachi, including 112 Wachi last-slide genetics cards. See [the complete listing audit](MARKETPLACE_AUDIT.md) for URLs, literal morph/sire/dam fields, exclusions and compatibility results. Seller labels are claims, not verified genotypes. Dotted hets, compact Snow aliases and compound hets are parsed in source order. Possible-het probabilities, uncertain visuals and dominant dosage remain explicit review choices. Line: Tremper alone assigns no Tremper alleles.
+
 ## Locus and allele relationships
 
 The app’s identifiers are **model identifiers**, not genome coordinates. A zero/one/two-copy model does not assert that a causal mutation has been isolated. Different letters can refer to different loci; identical letters in informal breeder notation do not establish allelism.
 
 | Modeled locus | Inheritance and allele relationship | Evidence / limitations |
 | --- | --- | --- |
+| TUG Snow | Originator-reported dominant model; 1 and 2 copies share a TUG appearance | Copy counts are scenarios, not inferred from appearance. Unknown relationship with Mack Snow prevents a joint snow prediction. |
 | Mack Snow | Incomplete dominant: 0 normal at this locus, 1 Mack Snow, 2 Super Snow | Breeder segregation; PAX7-associated research. Gem/TUG and other snow relationships excluded. |
 | Tremper Albino | Autosomal recessive; visual at two copies of its own variant | Separate strain supported by complementation; no hidden alleles inferred. |
 | Bell Albino | Autosomal recessive; separate from Tremper and Rainwater | Breeder and complementation evidence; record strain from parentage. |
@@ -52,7 +57,7 @@ The app’s identifiers are **model identifiers**, not genome coordinates. A zer
 | Murphy Patternless | Breeder-supported recessive | Distinct from line-bred patternless stripe; not inferred from a generic patternless description. |
 | White & Yellow | Conditional breeder-supported dominant model; 1 and 2 copies grouped visually | Molecular basis and variant dosage cannot be inferred from appearance; reported neurological concerns have no established incidence here. |
 
-Known or proposed eye loci (BAE, Cipher, Marble Eye, NDBE), other snow lines, and disputed size/color models remain reference-only. Line-bred traits have no assigned allele, locus, or expression percentage. No linked or allelic relationship is invented to force a complete prediction.
+Known or proposed eye loci (BAE, Cipher, Marble Eye, NDBE), Gem/Albey snow lines, and disputed size/color models remain reference-only. TUG Snow uses only its originator-reported conditional dominant model, with copy-count choices and a Mack/TUG compatibility exclusion. Line-bred traits have no assigned allele, locus, or expression percentage. No linked or allelic relationship is invented to force a complete prediction.
 
 ## Catalog
 
@@ -62,7 +67,9 @@ All entries use the review date above. Source titles below include publication d
 | --- | --- | --- | --- | --- |
 `
   const rows = morphs.map((m) => {
-    const loci = traits.filter((t) => t.id in (m.loci ?? {}))
+    const loci = traits.filter(
+      (t) => t.id in (m.loci ?? {}) || t.id === m.dosage,
+    )
     let refs = [...new Set(m.refs ?? loci.flatMap((t) => t.refs))]
     if (!refs.length)
       refs = [
@@ -77,7 +84,7 @@ All entries use the review date above. Source titles below include publication d
             ? loci
                 .map(
                   (t) =>
-                    `${t.name}: ${m.loci[t.id]} variant copies (${t.inheritance})`,
+                    `${t.name}: ${m.dosage === t.id ? 'explicit copy-count scenario required' : `${m.loci[t.id]} variant copies`} (${t.inheritance})`,
                 )
                 .join('; ')
             : m.lineage
@@ -101,7 +108,7 @@ All entries use the review date above. Source titles below include publication d
     Object.values(references)
       .map(
         (r) =>
-          `- [${r.title}](${r.url}) — consulted or indexed as qualified above, 26 October 2026.`,
+          `- [${r.title}](${r.url}) — consulted or indexed as qualified above; catalog reviewed 5 November 2026.`,
       )
       .join('\n')
   await mkdir('docs', { recursive: true })

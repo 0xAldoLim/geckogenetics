@@ -64,6 +64,7 @@ export function appearanceFromGenotypes(
     (id) => genotypes[id] === 2,
   )
   if (genotypes.snow === 1) result.body = 'snow'
+  if (genotypes.tug > 0) result.body = 'snow'
   if (genotypes.snow === 2) {
     result.body = 'snow'
     result.pattern = 'fine-spots'
@@ -200,6 +201,14 @@ export function appearanceForParent(parent: Parent): VisualProfile {
     ),
   ) as Record<string, Genotype>
   const genetic = appearanceFromGenotypes(genotypes)
+  if (genotypes.tug > 0 && !genotypes.snow) result.body = 'snow'
+  if (
+    genotypes.tug === 0 &&
+    !genotypes.snow &&
+    /tug/i.test(parent.morph) &&
+    result.body === 'snow'
+  )
+    result.body = 'normal'
   const albinoStates = ['tremper', 'bell', 'rainwater'].filter(
     (id) => id in parent.loci,
   )

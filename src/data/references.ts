@@ -1,4 +1,17 @@
 export const references = {
+  wachi: {
+    title:
+      'Wachi Gecko · Individual genetics cards and parentage (reviewed 5 Nov 2026)',
+    url: 'https://wachigecko.com/shop/',
+  },
+  tugOrigin: {
+    title: 'The Urban Reptile · Originator TUG Snow dominant model',
+    url: 'https://theurbanreptile.com/collection/leopard-geckos/tug-snow/',
+  },
+  phantomOrigin: {
+    title: 'The Urban Reptile · Phantom development and Tremper strain',
+    url: 'https://theurbanreptile.com/collection/leopard-geckos/phantom/',
+  },
   london: {
     title: 'Leopard Geckos London · Morph Masterlist (2024, updated)',
     url: 'https://www.leopardgeckoslondon.com/post/leopard-gecko-morph-masterlist',

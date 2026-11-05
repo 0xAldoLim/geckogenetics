@@ -3,7 +3,13 @@ import { ChevronDown, Dna, Info, Search, X, Check } from 'lucide-react'
 import type { GeneticState, Parent } from '../genetics/traits'
 import { traits, lineTraits, known } from '../genetics/traits'
 import { applyMorph, addMorph, morphs } from '../data/morphs'
-import { parseShorthand } from '../genetics/parser'
+import {
+  parseShorthand,
+  chosenMorph,
+  reviewLoci,
+  parentFromLabel,
+  type LabelChoices,
+} from '../genetics/parser'
 import MorphIllustration from './MorphIllustration'
 import { appearanceForParent } from '../genetics/appearance'
 
@@ -23,7 +29,18 @@ export default function ParentSelector({
   const [review, setReview] = useState(false)
   const [error, setError] = useState('')
   const [adding, setAdding] = useState(false)
+  const [choices, setChoices] = useState<LabelChoices>({})
   const parsed = parseShorthand(search)
+  const alreadyVisual = new Set(
+    parsed.proposals.flatMap((p, i) => {
+      const m = chosenMorph(p, i, choices)
+      return !p.het && !p.uncertain && !p.referenceOnly
+        ? Object.entries(m?.loci ?? {})
+            .filter(([, g]) => g === 2)
+            .map(([id]) => id)
+        : []
+    }),
+  )
   const active = traits.filter(
     (t) => parent.loci[t.id] && parent.loci[t.id].kind !== 'unknown',
   )
@@ -42,65 +59,20 @@ export default function ParentSelector({
   const updateLocus = (id: string, state: GeneticState) =>
     onChange({ ...parent, loci: { ...parent.loci, [id]: state } })
   function confirmParsed() {
-    if (parsed.proposals.some((p) => p.needsChoice)) {
+    try {
+      onChange(parentFromLabel(parent, search, choices, adding))
+      setSearch('')
+      setReview(false)
+      setAdding(false)
+      setChoices({})
+      setError('')
+    } catch (error) {
       setError(
-        'Specify a possible-het probability, e.g. 50% PH TA, then review again.',
+        error instanceof Error ? error.message : 'Review the trait choices.',
       )
-      return
     }
-    const preserve = adding || parsed.proposals.length === 0
-    const next: Parent = {
-      ...parent,
-      morph: (adding ? `${parent.morph} + ${search}` : search).slice(0, 200),
-      loci: preserve ? { ...parent.loci } : {},
-      lineage: preserve ? [...parent.lineage] : [],
-      labels: [
-        ...new Set([
-          ...(preserve ? parent.labels : []),
-          ...parsed.unresolved.map((s) => s.slice(0, 150)),
-        ]),
-      ].slice(0, 30),
-    }
-    const assignments = new Map<string, string>()
-    for (const p of parsed.proposals) {
-      if (!p.morph) continue
-      for (const [id, copies] of Object.entries(p.morph.loci ?? {})) {
-        const state: GeneticState =
-          p.het === 'known'
-            ? known(1)
-            : p.het === 'possible'
-              ? {
-                  kind: 'possible',
-                  n: Math.round(p.chance! * 10000),
-                  d: 1000000,
-                }
-              : known(copies)
-        if (
-          assignments.has(id) &&
-          assignments.get(id) !== JSON.stringify(state)
-        ) {
-          setError(
-            `Conflicting entries for ${id}. Edit the text before confirming.`,
-          )
-          return
-        }
-        assignments.set(id, JSON.stringify(state))
-        next.loci[id] = state
-      }
-      next.lineage = [...new Set([...next.lineage, ...(p.morph.lineage ?? [])])]
-      if (
-        p.morph.risk ||
-        p.morph.ambiguous ||
-        (!p.morph.loci && !p.morph.lineage)
-      )
-        next.labels = [...new Set([...next.labels, p.morph.name])].slice(0, 30)
-    }
-    onChange(next)
-    setSearch('')
-    setReview(false)
-    setAdding(false)
-    setError('')
   }
+
   return (
     <section
       className={`parent-card ${role.toLowerCase()}`}
@@ -156,6 +128,7 @@ export default function ParentSelector({
             maxLength={200}
             onChange={(e) => {
               setSearch(e.target.value)
+              setChoices({})
               setReview(false)
               setError('')
             }}
@@ -197,20 +170,149 @@ export default function ParentSelector({
         {review && (
           <div className="parse-review">
             <strong>Confirm the expanded meaning</strong>
-            {parsed.proposals.map((p, i) => (
-              <p key={i}>
-                ✓ {p.label}
-                {p.morph?.ambiguous
-                  ? ' — albino strain still needs selection'
-                  : ''}
+            {parsed.warnings.map((message) => (
+              <p role="alert" key={message}>
+                {message}
               </p>
             ))}
+            {parsed.proposals.map((p, i) => {
+              const m = chosenMorph(p, i, choices)
+              const setChoice = (key: string, value: string) =>
+                setChoices((current) => ({ ...current, [key]: value }))
+              return (
+                <div className="review-trait" key={i}>
+                  <strong>{p.label}</strong>
+                  {p.alternatives && (
+                    <label>
+                      Interpret {p.token}
+                      <select
+                        aria-label={`${role} meaning for ${p.token} ${i + 1}`}
+                        value={choices[`${i}:morph`] ?? ''}
+                        onChange={(e) =>
+                          setChoice(`${i}:morph`, e.target.value)
+                        }
+                      >
+                        <option value="">Choose the breeder's meaning</option>
+                        {p.alternatives.map((option) => (
+                          <option key={option.name} value={option.name}>
+                            {option.name}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                  )}
+                  {p.referenceOnly && (
+                    <p className="small muted">
+                      Lineage wording is retained without assigning visual or
+                      carrier alleles.
+                    </p>
+                  )}
+                  {m &&
+                    !p.referenceOnly &&
+                    reviewLoci(p, m).map((id) => {
+                      const key = `${i}:${id}`
+                      const carrier =
+                        p.het === 'possible' && !p.uncertain && m.dosage !== id
+                      if (
+                        carrier &&
+                        Object.keys(m.loci ?? {}).length > 1 &&
+                        alreadyVisual.has(id)
+                      )
+                        return (
+                          <p className="small muted" key={id}>
+                            {traits.find((t) => t.id === id)?.name} is already
+                            entered as visual; this possible-combination claim
+                            applies only to its unresolved components.
+                          </p>
+                        )
+                      const supplied =
+                        carrier &&
+                        Object.keys(m.loci ?? {}).length === 1 &&
+                        p.chance !== undefined &&
+                        !p.needsChoice
+                      return (
+                        <label key={id}>
+                          {traits.find((t) => t.id === id)?.name}{' '}
+                          {carrier ? 'carrier status' : 'copy-count scenario'}
+                          <select
+                            aria-label={`${role} review ${id} ${i + 1}`}
+                            value={
+                              choices[key] ?? (supplied ? 'source' : 'unknown')
+                            }
+                            onChange={(e) => setChoice(key, e.target.value)}
+                          >
+                            <option value="unknown">
+                              Unknown / probability not supplied
+                            </option>
+                            {supplied && (
+                              <option value="source">
+                                {p.chance}% possible het (entered)
+                              </option>
+                            )}
+                            {carrier ? (
+                              <>
+                                <option value="het">Confirmed het</option>
+                                <option value="1/2">50% possible het</option>
+                                <option value="33/50">
+                                  66% possible het (literal)
+                                </option>
+                                <option value="2/3">
+                                  66.67% possible het (exact 2/3)
+                                </option>
+                                <option value="none">Not carrying</option>
+                              </>
+                            ) : (
+                              <>
+                                <option value="0">
+                                  0 copies / trait absent
+                                </option>
+                                <option value="1">1 copy</option>
+                                <option value="2">2 copies</option>
+                              </>
+                            )}
+                          </select>
+                        </label>
+                      )
+                    })}
+                  {p.het === 'possible' &&
+                    m &&
+                    Object.keys(m.loci ?? {}).length > 1 && (
+                      <>
+                        <p className="small muted">
+                          A possible combination het does not establish separate
+                          carrier probabilities. Keep components unknown, or
+                          enter an explicit scenario from breeder records.
+                        </p>
+                        <label className="review-checkbox">
+                          <input
+                            type="checkbox"
+                            checked={choices[`${i}:independent`] === 'yes'}
+                            onChange={(e) =>
+                              setChoice(
+                                `${i}:independent`,
+                                e.target.checked ? 'yes' : 'no',
+                              )
+                            }
+                          />{' '}
+                          Use independent component-het probabilities for this
+                          scenario
+                        </label>
+                      </>
+                    )}
+                  {m?.ambiguous && (
+                    <p className="small muted">
+                      Choose the albino strain in the main controls after
+                      confirming.
+                    </p>
+                  )}
+                </div>
+              )
+            })}
             {parsed.unresolved.length > 0 && (
               <p>
-                Unresolved: <b>{parsed.unresolved.join(', ')}</b>. These stay as
-                labels and do not enter the calculation. MSEBN and SP have no
-                assumed meaning. T can mean Tremper or Tangerine; edit it to the
-                full name. H / PH need an identified recessive trait.
+                Unresolved: <b>{parsed.unresolved.join(', ')}</b>. Selected
+                abbreviation meanings are applied above; other wording stays as
+                a reference label.
               </p>
             )}
             <p className="muted">
@@ -372,35 +474,50 @@ export default function ParentSelector({
             </select>
           </div>
         )}
-        {(/white\s*(?:&|and)\s*yellow|w&y/i.test(parent.morph) ||
-          parent.loci.wy) && (
-          <div className="het-picker">
-            <label className="field-label" htmlFor={`${role}-wy-scenario`}>
-              WHITE & YELLOW SCENARIO
-            </label>
-            <select
-              id={`${role}-wy-scenario`}
-              value={
-                parent.loci.wy?.kind === 'known'
-                  ? String(parent.loci.wy.copies)
-                  : 'unknown'
-              }
-              onChange={(e) =>
-                updateLocus(
-                  'wy',
-                  e.target.value === 'unknown'
-                    ? { kind: 'unknown' }
-                    : known(Number(e.target.value) as 0 | 1 | 2),
-                )
-              }
-            >
-              <option value="unknown">Choose copies if known</option>
-              <option value="1">One copy (typical scenario)</option>
-              <option value="2">Two copies</option>
-              <option value="0">Without White & Yellow</option>
-            </select>
-          </div>
-        )}
+        {traits
+          .filter(
+            (t) =>
+              ['wy', 'tug'].includes(t.id) &&
+              (parent.loci[t.id] || selectedMorph?.dosage === t.id),
+          )
+          .map((t) => {
+            const state = parent.loci[t.id]
+            return (
+              <div className="het-picker" key={t.id}>
+                <label
+                  className="field-label"
+                  htmlFor={`${role}-${t.id}-scenario`}
+                >
+                  {t.name.toUpperCase()} SCENARIO
+                </label>
+                <select
+                  id={`${role}-${t.id}-scenario`}
+                  value={
+                    state?.kind === 'known' ? String(state.copies) : 'unknown'
+                  }
+                  onChange={(e) =>
+                    updateLocus(
+                      t.id,
+                      e.target.value === 'unknown'
+                        ? { kind: 'unknown' }
+                        : known(Number(e.target.value) as 0 | 1 | 2),
+                    )
+                  }
+                >
+                  <option value="unknown">Choose copies if known</option>
+                  <option value="1">One copy (scenario)</option>
+                  <option value="2">Two copies</option>
+                  <option value="0">Without {t.name}</option>
+                </select>
+                {t.id === 'tug' && (
+                  <p className="small muted">
+                    Originator-reported dominant model. A separate Super TUG
+                    appearance is not assumed.
+                  </p>
+                )}
+              </div>
+            )
+          })}
         <button
           className="advanced-toggle"
           onClick={() => setAdvanced(!advanced)}

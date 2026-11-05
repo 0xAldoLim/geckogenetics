@@ -34,6 +34,13 @@ describe('General combination estimates', () => {
         if (p.sire.loci[trait.id]) continue
         p.dam.loci[trait.id] = known(1)
         const r = calculate(p)
+        if (
+          morph.ambiguous &&
+          ['tremper', 'bell', 'rainwater'].includes(trait.id)
+        ) {
+          expect(r.unknown.map((t) => t.id)).toContain(trait.id)
+          continue
+        }
         expect(
           r.loci
             .find((l) => l.trait.id === trait.id)

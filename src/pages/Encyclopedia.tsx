@@ -27,7 +27,7 @@ export default function Encyclopedia({
       (m) =>
         filter === 'all' ||
         (filter === 'genetic'
-          ? m.loci
+          ? m.loci || m.dosage
           : filter === 'line'
             ? m.lineage || m.category === 'line'
             : filter === 'eyes'
@@ -53,7 +53,7 @@ export default function Encyclopedia({
                     'Reverse Stripe',
                   ].includes(m.name)
                 : filter === 'reference'
-                  ? !m.loci && !m.lineage && !m.risk
+                  ? !m.loci && !m.dosage && !m.lineage && !m.risk
                   : m.risk),
     )
     .filter(
@@ -62,7 +62,11 @@ export default function Encyclopedia({
         (source === 'unverified'
           ? m.category === 'unverified'
           : source === 'marketplace'
-            ? m.refs?.some((id) => /morphmarket\.com/.test(references[id].url))
+            ? m.refs?.some((id) =>
+                /morphmarket\.com|hypegecko\.com|wachigecko\.com/.test(
+                  references[id].url,
+                ),
+              )
             : m.refs?.includes('london')),
     )
   return (
@@ -124,7 +128,7 @@ export default function Encyclopedia({
       </div>
       <p className="small muted">
         Showing {Math.min(limit, entries.length)} of {entries.length} matches ·{' '}
-        {morphs.length} total catalog entries · Reviewed 26 October 2026.
+        {morphs.length} total catalog entries · Reviewed 5 November 2026.
       </p>
       <p className="catalog-note">
         A growing index of genes, patterns, eye traits, breeding lines, and
@@ -133,7 +137,9 @@ export default function Encyclopedia({
       </p>
       <div className="library-grid">
         {entries.slice(0, limit).map((m) => {
-          const loci = traits.filter((t) => t.id in (m.loci ?? {}))
+          const loci = traits.filter(
+            (t) => t.id in (m.loci ?? {}) || t.id === m.dosage,
+          )
           const sources = [...new Set(m.refs ?? loci.flatMap((t) => t.refs))]
           if (!sources.length)
             sources.push(
@@ -183,7 +189,11 @@ export default function Encyclopedia({
                       {t.description} {t.caveat}
                     </p>
                     <p className="small">
-                      Required copies: {m.loci?.[t.id]}. Evidence: {t.evidence}.
+                      Required copies:{' '}
+                      {m.dosage === t.id
+                        ? 'choose a copy-count scenario'
+                        : m.loci?.[t.id]}
+                      . Evidence: {t.evidence}.
                     </p>
                   </details>
                 ))}

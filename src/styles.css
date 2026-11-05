@@ -2772,3 +2772,43 @@ footer small {
   font-size: 27px;
   color: var(--green);
 }
+.review-trait {
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+}
+.review-trait label {
+  display: block;
+  font-size: 12px;
+  margin-top: 9px;
+}
+.review-trait select {
+  display: block;
+  width: 100%;
+  margin-top: 5px;
+  font-size: 12px;
+}
+.review-trait .review-checkbox {
+  display: flex;
+  align-items: start;
+  gap: 8px;
+}
+.review-checkbox input {
+  width: 17px;
+  height: 17px;
+  flex-shrink: 0;
+}
+.source-example {
+  margin-bottom: 15px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid var(--border);
+}
+.source-example p {
+  margin: 6px 0 10px;
+  font-size: 12px;
+}
+.source-example > div {
+  display: flex;
+  gap: 15px;
+  font-size: 12px;
+  flex-wrap: wrap;
+}

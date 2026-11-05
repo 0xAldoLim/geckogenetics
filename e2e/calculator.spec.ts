@@ -130,7 +130,11 @@ test('ambiguous shorthand is preserved without contaminating predictions', async
     .click()
   await expect(sire.locator('.parse-review')).toContainText('Unresolved:')
   await sire.getByRole('button', { name: 'Confirm recognized traits' }).click()
-  await expect(sire).toContainText('Preserved labels: MSEBN, H, T')
+  await expect(sire.getByRole('alert')).toContainText('Choose what T means')
+  await sire.getByLabel('Sire meaning for T 2').selectOption('Tremper Albino')
+  await sire.getByRole('button', { name: 'Confirm recognized traits' }).click()
+  await expect(sire.locator('.trait-chips')).toContainText('Eclipse')
+  await expect(sire.locator('.trait-chips')).toContainText('het (carrier)')
   await page.getByRole('button', { name: 'Calculate offspring' }).click()
   await expect(page.locator('.probability-badge')).toHaveText([
     '25%',
@@ -141,6 +145,85 @@ test('ambiguous shorthand is preserved without contaminating predictions', async
   await sire
     .getByRole('button', { name: 'Review combination / custom label' })
     .click()
+  await sire.getByRole('button', { name: 'Confirm recognized traits' }).click()
+  await expect(sire.locator('.trait-chips')).toContainText('50% possible het')
+})
+
+test('reviewed shop pairings calculate multi-gene and conditional TUG scenarios', async ({
+  page,
+}) => {
+  await page.goto('/')
+  const examples = page.getByLabel('Educational pairing preset')
+  await examples.selectOption('market-wachi-7440')
+  await expect(page.locator('.source-example')).toContainText('Line: Tremper')
+  await expect(page.locator('.probability-badge')).toHaveText(['50%', '50%'])
+  await expect(
+    page.getByRole('article', { name: 'Tremper Albino probabilities' }),
+  ).toHaveCount(0)
+  await examples.selectOption('market-wachi-7419')
+  await expect(
+    page
+      .getByRole('article', { name: 'Tremper Albino probabilities' })
+      .locator('dd'),
+  ).toHaveText(['25%', '50%', '25%'])
+  await examples.selectOption('market-hype-multi')
+  await expect(
+    page
+      .getByRole('article', { name: 'Tremper Albino probabilities' })
+      .locator('dd'),
+  ).toHaveText(['100%', '0%', '0%'])
+  await expect(
+    page.getByRole('article', { name: 'Eclipse probabilities' }).locator('dd'),
+  ).toHaveText(['25%', '50%', '25%'])
+  await page.getByRole('button', { name: 'By genotype', exact: true }).click()
+  await expect(page.locator('.offspring-card')).toHaveCount(12)
+  await examples.selectOption('market-wachi-tug')
+  await page.getByRole('button', { name: 'By appearance', exact: true }).click()
+  await expect(page.locator('.probability-badge')).toHaveText(['25%', '75%'])
+  await expect(page.locator('.source-example')).toContainText(
+    'explicitly assumed',
+  )
+})
+
+test('listing shorthand keeps unknown hets and possible visuals out of confirmed genes', async ({
+  page,
+}) => {
+  await page.goto('/')
+  const sire = page.getByRole('region', { name: 'Sire parent' })
+  await sire.getByLabel('Sire morph search').fill('BS ph. T h. Ecl')
+  await sire
+    .getByRole('button', { name: 'Review combination / custom label' })
+    .click()
+  await sire.getByLabel('Sire meaning for T 2').selectOption('Tremper Albino')
+  await sire.getByLabel('Sire review tremper 2').selectOption('2/3')
+  await sire.getByRole('button', { name: 'Confirm recognized traits' }).click()
+  await expect(sire.locator('.trait-chips')).toContainText(
+    '66.67% possible het',
+  )
+  await expect(sire.locator('.cartoon-art')).toHaveAttribute(
+    'data-eyes',
+    'slit',
+  )
+  await sire.getByLabel('Sire morph search').fill('Poss WY Tremper Stripe')
+  await sire
+    .getByRole('button', { name: 'Review combination / custom label' })
+    .click()
+  await sire.getByRole('button', { name: 'Confirm recognized traits' }).click()
+  await expect(sire.locator('#Sire-wy-scenario')).toHaveValue('unknown')
+  await expect(sire.locator('.trait-chips')).toContainText('Tremper Albino')
+  await sire.getByLabel('Sire morph search').fill('Tremper ph. DB')
+  await sire
+    .getByRole('button', { name: 'Review combination / custom label' })
+    .click()
+  await sire.getByLabel('Sire review eclipse 2').selectOption('1/2')
+  await sire.getByLabel('Sire review blizzard 2').selectOption('1/2')
+  await sire.getByRole('button', { name: 'Confirm recognized traits' }).click()
+  await expect(sire.getByRole('alert')).toContainText('independent')
+  await sire
+    .getByRole('checkbox', {
+      name: 'Use independent component-het probabilities for this scenario',
+    })
+    .check()
   await sire.getByRole('button', { name: 'Confirm recognized traits' }).click()
   await expect(sire.locator('.trait-chips')).toContainText('50% possible het')
 })

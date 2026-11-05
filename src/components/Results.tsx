@@ -39,6 +39,7 @@ export function resultSummary(pair: Pairing) {
     ),
     `Modeled loci: ${result.loci.map((l) => l.trait.name).join(', ') || 'none'}. Unknown active loci: ${result.unknown.map((t) => t.name).join(', ') || 'none'}.`,
     `Possible-het assumptions: ${result.possible.join(', ') || 'none'}.`,
+    ...result.limitations,
     pair.assumeUnlisted
       ? 'Unlisted active genes assumed not carried for this estimate. Explicitly unknown records stay unknown.'
       : 'Record-only mode: unspecified loci remain unknown.',
@@ -92,6 +93,7 @@ export default function Results({
       ? [
           ...groups.slice(0, 7),
           {
+            key: 'overflow',
             title: `${groups.length - 7} other outcomes`,
             probability: sum(groups.slice(7).map((g) => g.probability)),
             outcomes: [],
@@ -180,6 +182,11 @@ export default function Results({
           </div>
         </div>
       )}
+      {result.limitations.map((text) => (
+        <p className="notice" key={text}>
+          {text}
+        </p>
+      ))}
       {!result.outcomes.length && !result.blocked && !lineage.length && (
         <div className="empty-state">
           <DnaIcon />
@@ -273,7 +280,7 @@ export default function Results({
             >
               {chartGroups.map((g, i) => (
                 <div
-                  key={g.title}
+                  key={g.key}
                   style={{
                     width: `${g.probability.value * 100}%`,
                     background: colors[i % colors.length],
@@ -286,7 +293,7 @@ export default function Results({
             </div>
             <div className="chart-legend">
               {chartGroups.map((g, i) => (
-                <span key={g.title}>
+                <span key={g.key}>
                   <i style={{ background: colors[i % colors.length] }} />
                   {displayTitle(g.title)} <b>{percent(g.probability)}</b>
                 </span>
@@ -295,7 +302,7 @@ export default function Results({
           </div>
           <div className="offspring-grid">
             {groups.slice(0, limit).map((g, i) => (
-              <article key={`${view}-${g.title}`} className="offspring-card">
+              <article key={`${view}-${g.key}`} className="offspring-card">
                 <div className={`offspring-art art-${i % 3}`}>
                   <span className="outcome-number">
                     POSSIBILITY {String(i + 1).padStart(2, '0')}

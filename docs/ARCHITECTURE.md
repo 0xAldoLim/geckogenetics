@@ -25,7 +25,7 @@ Every engine function is independent of React and storage. Adding another specie
 
 ## Catalog corrections
 
-Update the catalog or locus definition with supporting evidence. New names can enter the encyclopedia without entering probability calculations. Modeling a new locus requires evaluating allelism, linkage, interactions, evidence quality, and welfare. Raising the eight-locus limit requires reviewing exponential outcome growth. Keep the reference document and regression tests in sync.
+Update the catalog or locus definition with supporting evidence. New names can enter the encyclopedia without entering probability calculations. Modeling a new locus requires evaluating allelism, linkage, interactions, evidence quality, and welfare. Nine locus definitions include the conditional TUG model. Mack/TUG compatibility rules are checked before joint enumeration; raising the simultaneous independent-locus limit requires reviewing exponential growth. Keep the reference document and regression tests in sync.
 
 ## Browser behavior
 
@@ -39,6 +39,8 @@ The app uses system fonts, original cartoon WebP illustrations, and bundled icon
 
 ## Validation and delivery
 
-`pnpm test` verifies required crosses, possible hets, the six-genotype Gecko Labs example, carrier conditioning, separate albino strains, aliases, data validation, welfare aliases, and exact probability conservation. Exhaustive tests check all supported loci over seven representative known/possible parent states in both crossing directions and all eight simultaneous heterozygous loci. General estimate regressions cover carrier additions across every non-risk catalog entry and each supported recessive, explicit unknown overrides, trait stacking, and assumption settings in legacy/new links.
+`pnpm test` verifies required crosses, possible hets, the six-genotype Gecko Labs example, carrier conditioning, separate albino strains, aliases, data validation, welfare aliases, and exact probability conservation. Exhaustive tests check all supported loci over seven representative known/possible parent states in both crossing directions and all eight compatible simultaneous heterozygous loci. General estimate regressions cover carrier additions across every non-risk catalog entry and each supported recessive, explicit unknown overrides, trait stacking, and assumption settings in legacy/new links.
 
 `pnpm test:e2e` checks desktop and mobile Chromium for the primary controls, presets, Punnett expansion, genotype editing, saved/shared pairings, ambiguous input, welfare behavior, corrupt storage, responsive overflow, and runtime errors. `pnpm build` runs strict TypeScript checks before producing `dist/`. CI uploads the static production build and browser diagnostics as artifacts.
+
+The shared `parentFromLabel` resolver powers interactive review and marketplace regressions. It scopes het qualifiers in input order, holds unknown probabilities, checks compound-het assumptions and separates lineage from allele evidence. `marketplace-listings.json` records a dated source audit, including unsupported species and accessories; it is test data and is not bundled into the app. Four curated source-linked pairings are bundled separately. Tests cover every recorded leopard-gecko parent pair and all 5,760 advertised male/female listing combinations under explicit test scenarios.
