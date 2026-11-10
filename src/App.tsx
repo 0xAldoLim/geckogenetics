@@ -408,6 +408,9 @@ export default function App() {
                     <option value="black-night">
                       Black Night × Black Night het Tremper
                     </option>
+                    <option value="black-night-stripe-mp">
+                      Black Night Tangerine Stripe × Black Night het MP
+                    </option>
                     <optgroup label="Reviewed breeder examples">
                       {marketplaceExamples.map((e) => (
                         <option key={e.id} value={e.id}>

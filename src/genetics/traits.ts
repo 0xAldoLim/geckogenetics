@@ -162,6 +162,13 @@ export const lineTraits = [
   'HG',
   'Afghan',
   'Patty',
+  'Pandora',
+  'Tiger',
+  'KYT',
+  'Ogre',
+  'Puma',
+  'Ablo',
+  'Melanistic',
 ] as const
 export type LineTrait = (typeof lineTraits)[number]
 export type Genotype = 0 | 1 | 2

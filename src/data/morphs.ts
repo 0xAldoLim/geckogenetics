@@ -2,6 +2,7 @@ import { blankParent, known, traits } from '../genetics/traits'
 import type { Genotype, LineTrait, Pairing, Parent } from '../genetics/traits'
 import type { ReferenceId } from './references'
 import { indexedMorphs } from './catalog-index'
+import { faunaryMorphs } from './faunary-morphs'
 export interface Morph {
   dosage?: string
   category?: 'line' | 'pattern' | 'eye' | 'combination' | 'unverified'
@@ -450,18 +451,33 @@ export const morphs: Morph[] = [
   },
 ]
 const indexedNames = new Set(morphs.map((m) => m.name.toLowerCase()))
-for (const entry of indexedMorphs) {
+for (const entry of [...indexedMorphs, ...faunaryMorphs]) {
   if (!indexedNames.has(entry.name.toLowerCase())) {
     morphs.push(entry)
     indexedNames.add(entry.name.toLowerCase())
+  } else {
+    const existing = morphs.find(
+      (m) => m.name.toLowerCase() === entry.name.toLowerCase(),
+    )!
+    existing.aliases = [...new Set([...existing.aliases, ...entry.aliases])]
   }
 }
 const breederAliases: Record<string, string[]> = {
-  'Bold Stripe': ['BS', 'Boldstripe'],
-  Tangerine: ['Tang'],
-  Eclipse: ['Ecl', 'EC'],
-  Blizzard: ['Blizz'],
-  Emerine: ['EM'],
+  'Black Night': ['BNc'],
+  'Bold Stripe': ['BS', 'Boldstripe', 'Boldstrip'],
+  Tangerine: ['Tang', 'TG', 'Tangerin', 'Tanggerin'],
+  Eclipse: ['Ecl', 'EC', 'Eclips', 'Eclipes', 'Eclispe', 'Ecipse'],
+  Blizzard: ['Blizz', 'Blizard'],
+  Emerine: ['EM', 'Emerin', 'Emrn'],
+  'Dark Tangerine': ['DT'],
+  Afghan: ['Afgan', 'Afghanicus'],
+  'White & Yellow': ['White and Yellow', 'White Yellow', 'WnY'],
+  'Mack Snow': ['Macsnow', 'Mascksnow'],
+  'Murphy Patternless': ['Murphy Patternles', 'Murphy Paternless'],
+  Bojoneroko: ['BJN'],
+  Sunglow: ['SG', 'Sunglos'],
+  Tomato: ['TM', 'Tomatto'],
+  'White Knight': ['WK'],
   'Reverse Stripe': ['RVS'],
   'Red Stripe': ['RS'],
   'Super Pied': ['SPied', 'SP', 'XPied'],
@@ -473,6 +489,8 @@ for (const entry of morphs)
       ...new Set([...entry.aliases, ...breederAliases[entry.name]]),
     ]
 const aptor = morphs.find((m) => m.name === 'APTOR')!
+const unspecifiedAlbino = morphs.find((m) => m.name === 'Albino (unspecified)')!
+unspecifiedAlbino.ambiguous = true
 aptor.loci = { tremper: 2 }
 aptor.lineage = ['Tangerine', 'Patternless Stripe']
 const phantom = morphs.find((m) => m.name === 'Phantom')!
@@ -562,7 +580,13 @@ export function addMorph(parent: Parent, morph: Morph): Parent {
   }
 }
 export function preset(
-  id: 'snow' | 'sunglow-a' | 'sunglow-b' | 'labs' | 'black-night',
+  id:
+    | 'snow'
+    | 'sunglow-a'
+    | 'sunglow-b'
+    | 'labs'
+    | 'black-night'
+    | 'black-night-stripe-mp',
 ): Pairing {
   const sire = blankParent(),
     dam = blankParent()
@@ -577,6 +601,12 @@ export function preset(
     sire.morph = dam.morph = 'Black Night'
     sire.lineage = dam.lineage = ['Black Night']
     dam.loci.tremper = known(1)
+  } else if (id === 'black-night-stripe-mp') {
+    sire.morph = 'Black Night Tangerine Stripe'
+    sire.lineage = ['Black Night', 'Tangerine', 'Stripe']
+    dam.morph = 'Black Night'
+    dam.lineage = ['Black Night']
+    dam.loci.patternless = known(1)
   } else if (id === 'labs') {
     sire.morph = 'Tremper Albino het Eclipse'
     sire.loci = { tremper: known(2), eclipse: known(1) }

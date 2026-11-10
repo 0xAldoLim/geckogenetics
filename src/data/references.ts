@@ -1,4 +1,8 @@
 export const references = {
+  faunary: {
+    title: 'Faunary · Public leopard-gecko listing descriptions (9 Nov 2026)',
+    url: 'https://faunary.id/catalog?category=leopard-gecko',
+  },
   wachi: {
     title:
       'Wachi Gecko · Individual genetics cards and parentage (reviewed 5 Nov 2026)',

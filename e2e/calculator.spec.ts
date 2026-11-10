@@ -270,7 +270,13 @@ test('library search, uncertain morphs, and welfare warnings are accessible', as
     'Disputed inheritance',
   )
   await page.getByLabel('Search morph library').fill('Lemon Frost')
-  await page.getByRole('button', { name: 'Use in calculator' }).click()
+  await page
+    .locator('.library-card')
+    .filter({
+      has: page.getByRole('heading', { name: 'Lemon Frost', exact: true }),
+    })
+    .getByRole('button', { name: 'Use in calculator' })
+    .click()
   await page.getByRole('button', { name: 'Calculate offspring' }).click()
   await expect(page.locator('.welfare-warning')).toContainText(
     'Animal welfare comes first',
@@ -408,6 +414,7 @@ test('hidden albino carriers retain a normal illustration', async ({
   const offspring = page.locator(
     '.offspring-card figure:first-child .cartoon-art',
   )
+  await offspring.scrollIntoViewIfNeeded()
   await expect(offspring).toHaveAttribute('data-body', 'normal')
   await expect(offspring).toHaveAttribute('data-eyes', 'slit')
   await expect(offspring.locator('img')).toHaveJSProperty('complete', true)
@@ -629,6 +636,124 @@ test('Black Night family stays visible in simple results with honest shade examp
     'Black Night line offspring',
   )
   await expect(page.locator('.probability-badge')).toHaveCount(0)
+})
+
+test('Black Night Tangerine Stripe and typed h MP combine directly without optional settings', async ({
+  page,
+}) => {
+  await page.goto('/')
+  const sire = page.getByRole('region', { name: 'Sire parent' })
+  const dam = page.getByRole('region', { name: 'Dam parent' })
+  await sire
+    .getByLabel('Sire morph search')
+    .fill('black night tangerine stripe')
+  await sire
+    .locator('.morph-options button')
+    .filter({
+      has: page.getByText('Black Night Tangerine Stripe', { exact: true }),
+    })
+    .click()
+  await dam.getByLabel('Dam morph search').fill('black ngiht h MP')
+  await expect(
+    dam.getByRole('button', {
+      name: 'Use Black Night · Het Murphy Patternless Combination',
+      exact: true,
+    }),
+  ).toBeVisible()
+  await dam.getByLabel('Dam morph search').press('Enter')
+  await expect(dam.locator('.trait-chips')).toContainText('Murphy Patternless')
+  await expect(dam.locator('.trait-chips')).toContainText('het (carrier)')
+  await expect(page.locator('.advanced-fields')).toHaveCount(0)
+  await page
+    .getByRole('button', { name: 'Calculate offspring', exact: true })
+    .click()
+  await expect(
+    page
+      .getByRole('article', { name: 'Murphy Patternless probabilities' })
+      .locator('dd'),
+  ).toHaveText(['0%', '50%', '50%'])
+  await expect(page.locator('.family-summary')).toContainText(
+    'Black Night + Tangerine + Stripe',
+  )
+  await expect(
+    page.locator('.offspring-card .cartoon-art[data-pattern="patternless"]'),
+  ).toHaveCount(0)
+  await page
+    .getByRole('button', { name: 'Genetics details', exact: true })
+    .click()
+  await expect(page.locator('.probability-badge')).toHaveText(['50%', '50%'])
+  await page
+    .getByLabel('Educational pairing preset')
+    .selectOption('black-night-stripe-mp')
+  await expect(
+    page
+      .getByRole('article', { name: 'Murphy Patternless probabilities' })
+      .locator('dd'),
+  ).toHaveText(['0%', '50%', '50%'])
+})
+
+test('Faunary description labels are selectable and possible het MP stays unknown until supplied', async ({
+  page,
+}) => {
+  await page.goto('/')
+  const sire = page.getByRole('region', { name: 'Sire parent' })
+  await sire.getByLabel('Sire morph search').fill('Pandora CT')
+  await sire
+    .locator('.source-morph-option')
+    .filter({ has: page.getByText('Pandora CT', { exact: true }) })
+    .click()
+  await expect(sire.getByRole('heading', { level: 3 })).toContainText('Pandora')
+  await expect(sire.getByRole('heading', { level: 3 })).toContainText(
+    'Carrot Tail',
+  )
+  await sire.getByLabel('Sire morph search').fill('Bn pht mp')
+  await sire
+    .locator('.source-morph-option')
+    .filter({ has: page.getByText('Bn pht mp', { exact: true }) })
+    .click()
+  await expect(sire.getByLabel('Sire review patternless 2')).toHaveValue(
+    'unknown',
+  )
+  await sire
+    .getByRole('button', { name: 'Confirm recognized traits', exact: true })
+    .click()
+  await page
+    .getByRole('button', { name: 'Calculate offspring', exact: true })
+    .click()
+  await expect(page.locator('.results-section')).toContainText(
+    'More information needed for Murphy Patternless',
+  )
+  await expect(
+    page.getByRole('article', { name: 'Murphy Patternless probabilities' }),
+  ).toHaveCount(0)
+  await sire
+    .getByLabel('Sire morph search')
+    .fill('Hypo Tangerine het Tremper ph RAPTOR')
+  await sire
+    .getByRole('button', { name: 'Review combination / custom label' })
+    .click()
+  await expect(sire.getByLabel('Sire review tremper 4')).toHaveCount(0)
+  await expect(
+    sire.getByRole('checkbox', {
+      name: 'Use independent component-het probabilities for this scenario',
+    }),
+  ).toHaveCount(0)
+  await sire.getByLabel('Sire review eclipse 4').selectOption('2/3')
+  await sire
+    .getByRole('button', { name: 'Confirm recognized traits', exact: true })
+    .click()
+  await expect(sire.locator('.trait-chips')).toContainText(
+    '66.67% possible het',
+  )
+  const nav = page.getByRole('button', { name: 'Toggle navigation' })
+  if (await nav.isVisible()) await nav.click()
+  await page.getByRole('button', { name: 'Morph library', exact: true }).click()
+  await page.getByLabel('Search morph library').fill('Pandora')
+  await page.getByLabel('Filter catalog source').selectOption('faunary')
+  await expect(page.locator('.library-card')).toHaveCount(1)
+  await expect(page.locator('.library-card')).toContainText(
+    'No albino strain, hidden gene',
+  )
 })
 
 test('combination text, albino strain choice and dominant scenarios work in the main controls', async ({

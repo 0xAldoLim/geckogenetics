@@ -24,6 +24,22 @@ export interface ParseResult {
   warnings: string[]
 }
 export type LabelChoices = Record<string, string>
+/** Only documented word forms and explicit abbreviations; no fuzzy allele guessing. */
+export function normalizeMorphInput(input: string): string {
+  return input
+    .normalize('NFKC')
+    .replace(/\bblack\s*ngiht\b/gi, 'Black Night')
+    .replace(/\b(?:phet|posshet|poshet|possiblehet)\b/gi, 'ph')
+    .replace(/\bpht(?=\s+(?:MP|Eclipse|Ecl|Raptor|Blizzard|Bell)\b)/gi, 'ph')
+    .replace(/\bphT\b/gi, 'ph T')
+    .replace(/\b(POSS|POS)(?=(?:MS|SS|MSBN|WY|GIANT|SNOW)\b)/gi, '$1 ')
+    .replace(
+      /\b(PH|HET|H)(?=(?:TREMPER|MP|ECLIPSE|ECL|RAPTOR|BELL|BLIZZARD|RW)\b)/gi,
+      '$1 ',
+    )
+    .replace(/\b(MSLF|MS|MST|BS)(?=TREMPER|TANGERINE|ENIGMA|BELL)/gi, '$1 ')
+    .replace(/(TANGERINE|TREMPER|BELL)(?=TREMPER|ENIGMA)/gi, '$1 ')
+}
 const find = (name: string) => morphs.find((m) => m.name === name)!
 const allRecessive = (m: Morph) =>
   Object.keys(m.loci ?? {}).length > 0 &&
@@ -67,7 +83,7 @@ export function parseShorthand(input: string): ParseResult {
         'Oreo/Zulu and African fat-tailed gecko labels belong to another species. They cannot use the leopard gecko genetics model.',
       ]
     : []
-  let remaining = input
+  let remaining = normalizeMorphInput(input)
     .replace(/\((?:unsex\s*)?(?:poss\s*)?(?:male|female|unsex)[^)]*\)/gi, ' ')
     .replace(/\b(?:HYP|WB)\d+\b[\s\S]*$/i, ' ')
     .replace(/\b(?:double|triple)\s+(?=het\b)/gi, '')
@@ -87,11 +103,11 @@ export function parseShorthand(input: string): ParseResult {
       continue
     }
     const modifier = remaining.match(
-      /^(?:(\d+(?:\.\d+)?)%?\s+)?(possible\s+het|ph|het|h|poss\.?|possible)\b\s*(?:(\d+(?:\.\d+)?)%\s*)?/i,
+      /^(?:(\d+(?:\.\d+)?)%?\s+)?(possible\s+het|ph|het|h|poss\.?|pos\.?|p|possible)\b\s*(?:(\d+(?:\.\d+)?)%\s*)?/i,
     )
     if (modifier) {
       line = false
-      uncertain = /^(poss\.?|possible)$/i.test(modifier[2])
+      uncertain = /^(poss\.?|pos\.?|p|possible)$/i.test(modifier[2])
       mode = uncertain
         ? undefined
         : /ph|possible/i.test(modifier[2])
@@ -106,7 +122,7 @@ export function parseShorthand(input: string): ParseResult {
       continue
     }
     const connector = remaining.match(
-      /^(line|bloodline|cross|and|x|f1|proven)\b/i,
+      /^(line|bloodline|cross|cros|outcross|and|x|f\d+|proven)\b/i,
     )
     if (connector) {
       if (/^line|bloodline$/i.test(connector[1])) line = true
@@ -114,7 +130,7 @@ export function parseShorthand(input: string): ParseResult {
       continue
     }
     const ambiguous = remaining.match(
-      /^(SSRBN|MSRBN|SSR|MSR|T|R)(?=$|[^\p{L}\p{N}])/iu,
+      /^(SSRBN|MSRBN|SSR|MSR|HT|T|R)(?=$|[^\p{L}\p{N}])/iu,
     )
     let morph: Morph | undefined,
       alternatives: Morph[] | undefined,
@@ -124,22 +140,37 @@ export function parseShorthand(input: string): ParseResult {
       token = ambiguous[1].toUpperCase()
       consumed = ambiguous[0].length
       alternatives =
-        token === 'T'
-          ? [find('Tremper Albino'), find('Tangerine')]
-          : token === 'R'
-            ? [find('Rainwater Albino'), find('RAPTOR')]
-            : [
-                snowChoice(
-                  token.startsWith('SS') ? 2 : 1,
-                  true,
-                  token.endsWith('BN'),
-                ),
-                snowChoice(
-                  token.startsWith('SS') ? 2 : 1,
-                  false,
-                  token.endsWith('BN'),
-                ),
-              ]
+        token === 'HT'
+          ? [
+              {
+                name: 'Hypo Tangerine',
+                aliases: [],
+                lineage: ['Hypo', 'Tangerine'],
+                note: 'Explicit interpretation of HT as Hypo Tangerine.',
+              },
+              {
+                name: 'Het Tremper Albino',
+                aliases: [],
+                loci: { tremper: 1 },
+                note: 'Explicit interpretation of HT as a Tremper carrier.',
+              },
+            ]
+          : token === 'T'
+            ? [find('Tremper Albino'), find('Tangerine')]
+            : token === 'R'
+              ? [find('Rainwater Albino'), find('RAPTOR')]
+              : [
+                  snowChoice(
+                    token.startsWith('SS') ? 2 : 1,
+                    true,
+                    token.endsWith('BN'),
+                  ),
+                  snowChoice(
+                    token.startsWith('SS') ? 2 : 1,
+                    false,
+                    token.endsWith('BN'),
+                  ),
+                ]
       unresolved.push(token)
     } else {
       const candidate = aliases().find((c) => c.rx.test(remaining))
@@ -209,6 +240,18 @@ export function reviewLoci(p: Proposal, m: Morph): string[] {
     ]),
   ]
 }
+export function confirmedLoci(
+  proposals: Proposal[],
+  choices: LabelChoices,
+): Set<string> {
+  return new Set(
+    proposals.flatMap((p, i) =>
+      !p.uncertain && !p.referenceOnly && p.het !== 'possible'
+        ? Object.keys(chosenMorph(p, i, choices)?.loci ?? {})
+        : [],
+    ),
+  )
+}
 function probability(value: string | undefined, p: Proposal): GeneticState {
   if (value === 'unknown') return { kind: 'unknown' }
   if (value === 'het') return known(1)
@@ -263,6 +306,7 @@ export function parentFromLabel(
       ),
   )
   const assignments = new Map<string, string>()
+  const established = confirmedLoci(parsed.proposals, choices)
   function assign(id: string, state: GeneticState) {
     const value = JSON.stringify(state)
     if (assignments.has(id) && assignments.get(id) !== value)
@@ -274,10 +318,18 @@ export function parentFromLabel(
   }
   for (const { p, i, morph } of resolved) {
     const ids = Object.keys(morph.loci ?? {})
-    if (p.het && !allRecessive(morph))
+    if (p.het && !allRecessive(morph)) {
+      if (!morph.loci && !morph.lineage && !morph.dosage && !morph.risk) {
+        next.labels.push(`${p.label}: full trait meaning unconfirmed`)
+        if (morph.ambiguous)
+          for (const id of ['tremper', 'bell', 'rainwater'])
+            if (!explicitVisual.has(id)) next.loci[id] = { kind: 'unknown' }
+        continue
+      }
       throw new Error(
         `${morph.name} cannot be treated as a recessive het. Record its line or visual trait instead.`,
       )
+    }
     if (p.referenceOnly) {
       next.labels.push(`${morph.name} lineage; genotype unknown`)
       for (const id of ids)
@@ -290,7 +342,9 @@ export function parentFromLabel(
         `Compound possible het ${morph.name}: component probabilities and their relationship require breeder records`,
       )
     for (const [id, copies] of Object.entries(morph.loci ?? {})) {
-      if (p.het === 'possible' && ids.length > 1 && explicitVisual.has(id))
+      if ((p.het || p.uncertain) && ids.length > 1 && explicitVisual.has(id))
+        continue
+      if (p.het === 'possible' && ids.length > 1 && established.has(id))
         continue
       let state: GeneticState
       if (p.uncertain) {
@@ -305,7 +359,7 @@ export function parentFromLabel(
           ids.length > 1 ? { ...p, chance: undefined } : p,
         )
         if (
-          ids.length > 1 &&
+          ids.filter((component) => !established.has(component)).length > 1 &&
           state.kind === 'possible' &&
           choices[`${i}:independent`] !== 'yes'
         )

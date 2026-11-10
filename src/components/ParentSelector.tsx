@@ -7,11 +7,18 @@ import {
   parseShorthand,
   chosenMorph,
   reviewLoci,
+  confirmedLoci,
   parentFromLabel,
   type LabelChoices,
 } from '../genetics/parser'
 import MorphIllustration from './MorphIllustration'
 import { appearanceForParent } from '../genetics/appearance'
+import {
+  searchMorphs,
+  searchFaunaryLabels,
+  canApplyLabel,
+  quickCombination,
+} from '../genetics/morph-search'
 
 export default function ParentSelector({
   parent,
@@ -30,17 +37,9 @@ export default function ParentSelector({
   const [error, setError] = useState('')
   const [adding, setAdding] = useState(false)
   const [choices, setChoices] = useState<LabelChoices>({})
+  const [sourceLabel, setSourceLabel] = useState(false)
   const parsed = parseShorthand(search)
-  const alreadyVisual = new Set(
-    parsed.proposals.flatMap((p, i) => {
-      const m = chosenMorph(p, i, choices)
-      return !p.het && !p.uncertain && !p.referenceOnly
-        ? Object.entries(m?.loci ?? {})
-            .filter(([, g]) => g === 2)
-            .map(([id]) => id)
-        : []
-    }),
-  )
+  const alreadyKnown = confirmedLoci(parsed.proposals, choices)
   const active = traits.filter(
     (t) => parent.loci[t.id] && parent.loci[t.id].kind !== 'unknown',
   )
@@ -49,28 +48,45 @@ export default function ParentSelector({
     (m) =>
       m.ambiguous && parent.morph.toLowerCase().includes(m.name.toLowerCase()),
   )
-  const options = morphs
-    .filter((m) =>
-      `${m.name} ${m.aliases.join(' ')}`
-        .toLowerCase()
-        .includes(search.toLowerCase()),
-    )
-    .slice(0, 8)
+  const options = searchMorphs(search)
+  const sourceOptions = searchFaunaryLabels(search)
+  const combination = quickCombination(search)
   const updateLocus = (id: string, state: GeneticState) =>
     onChange({ ...parent, loci: { ...parent.loci, [id]: state } })
   function confirmParsed() {
     try {
-      onChange(parentFromLabel(parent, search, choices, adding))
+      const base =
+        sourceLabel && !adding
+          ? { ...parent, loci: {}, lineage: [], labels: [] }
+          : parent
+      onChange(parentFromLabel(base, search, choices, adding))
       setSearch('')
       setReview(false)
       setAdding(false)
       setChoices({})
+      setSourceLabel(false)
       setError('')
     } catch (error) {
       setError(
         error instanceof Error ? error.message : 'Review the trait choices.',
       )
     }
+  }
+  function chooseCombination(label: string, fromSource = false) {
+    if (!canApplyLabel(label)) {
+      setSearch(label)
+      setChoices({})
+      setSourceLabel(fromSource)
+      setReview(true)
+      setError('')
+      return
+    }
+    onChange(parentFromLabel(parent, label, {}, adding))
+    setSearch('')
+    setAdding(false)
+    setReview(false)
+    setSourceLabel(false)
+    setError('')
   }
 
   return (
@@ -122,13 +138,20 @@ export default function ParentSelector({
             placeholder={
               adding
                 ? 'Search a trait to add…'
-                : 'Choose a morph or enter a combination…'
+                : 'Choose a morph, or type a combination and press Enter…'
             }
             value={search}
             maxLength={200}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter' && search.trim() && !review) {
+                event.preventDefault()
+                chooseCombination(search)
+              }
+            }}
             onChange={(e) => {
               setSearch(e.target.value)
               setChoices({})
+              setSourceLabel(false)
               setReview(false)
               setError('')
             }}
@@ -147,6 +170,15 @@ export default function ParentSelector({
         </label>
         {search && !review && (
           <div className="morph-options">
+            {combination && (
+              <button
+                className="combination-option"
+                onClick={() => chooseCombination(search)}
+              >
+                <span>Use {combination}</span>
+                <span>Combination</span>
+              </button>
+            )}
             {options.map((m) => (
               <button
                 key={m.name}
@@ -158,7 +190,28 @@ export default function ParentSelector({
               >
                 <span>{m.name}</span>
                 <span>
-                  {m.loci ? 'Genetic' : m.lineage ? 'Line-bred' : 'Reference'}
+                  {m.loci || m.dosage
+                    ? 'Genetic'
+                    : m.lineage
+                      ? 'Family line'
+                      : 'Reference'}
+                </span>
+              </button>
+            ))}
+            {sourceOptions.length > 0 && (
+              <span className="search-source-label">
+                From Faunary descriptions
+              </span>
+            )}
+            {sourceOptions.map((label) => (
+              <button
+                key={label}
+                className="source-morph-option"
+                onClick={() => chooseCombination(label, true)}
+              >
+                <span>{label}</span>
+                <span>
+                  {canApplyLabel(label) ? 'Use combination' : 'Review details'}
                 </span>
               </button>
             ))}
@@ -216,13 +269,13 @@ export default function ParentSelector({
                       if (
                         carrier &&
                         Object.keys(m.loci ?? {}).length > 1 &&
-                        alreadyVisual.has(id)
+                        alreadyKnown.has(id)
                       )
                         return (
                           <p className="small muted" key={id}>
                             {traits.find((t) => t.id === id)?.name} is already
-                            entered as visual; this possible-combination claim
-                            applies only to its unresolved components.
+                            confirmed; this possible-combination claim applies
+                            only to the remaining traits.
                           </p>
                         )
                       const supplied =
@@ -276,7 +329,9 @@ export default function ParentSelector({
                     })}
                   {p.het === 'possible' &&
                     m &&
-                    Object.keys(m.loci ?? {}).length > 1 && (
+                    Object.keys(m.loci ?? {}).filter(
+                      (id) => !alreadyKnown.has(id),
+                    ).length > 1 && (
                       <>
                         <p className="small muted">
                           A possible combination het does not establish separate

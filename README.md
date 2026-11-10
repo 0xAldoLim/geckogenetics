@@ -11,7 +11,7 @@ Explore what a leopard gecko pairing could produce—and understand why. GeckoGe
 - **Pair two geckos.** Choose each morph, add visible traits, then select any hidden carrier traits (hets). Combine traits freely; breeder notes and detailed settings are optional.
 - **See the possibilities.** Start with Simple results: clear offspring names and plain-language carrier notes. Open Genetics details or “Why this result?” when you want the DNA notation and inheritance breakdown.
 - **Understand the color story.** Keep Tangerine, Super Hypo, Carrot Tail, and other selected breeding lines separate from single-gene inheritance.
-- **Learn as you go.** Browse 212 indexed morph, pattern, eye-trait, breeding-line, and marketplace names. Filter by trait or source, including the Leopard Geckos London masterlist and marketplace records. Newer names such as Pied, Super Pied, Dark Tangerine, and Bojoneroko are searchable with their evidence status.
+- **Learn as you go.** Browse 242 indexed morph, pattern, eye-trait, breeding-line, and marketplace names, plus 1,682 searchable Faunary label variants from listing descriptions, titles and parent fields. Filter the library by trait or source. Newer names such as Pied, Super Pied, Dark Tangerine, Pandora and KYT are searchable with their evidence status.
 - **See the actual feature change.** Cartoon guides use separate body, pattern, and eye features: Eclipse changes the eyes, Pied changes white patches, stripes change the markings, and hidden carrier genes do not change the drawing.
 - **Keep a pairing handy.** Save up to 20 pairings in your browser, share a pairing link, or copy results with their assumptions.
 - **Choose your lighting.** Use the sun/moon button to switch between light and dark mode. Your choice stays in this browser; the first visit follows your device preference.
@@ -23,6 +23,8 @@ No accounts, subscriptions, database, or AI services. Calculations run on your d
 The calculator opens with **Mack Snow × Mack Snow**: 25% normal at the Snow locus, 50% Mack Snow, and 25% Super Snow under the stated model.
 
 For **Black Night × Black Night het Tremper**, choose Black Night for both parents and add Tremper Albino under the second parent's **Hidden traits (hets)**. The standard estimate gives **0% visual Tremper, 50% carriers, and 50% non-carriers**, assuming the first parent does not carry Tremper. Both parents contribute Black Night ancestry; darkness and quality do not have a reliable single-gene percentage. This workflow also works for Tangerine, pattern lines, other indexed morphs, and combinations of supported genes. Select this pairing directly from the examples menu to explore it.
+
+For **Black Night Tangerine Stripe × Black Night h MP**, select Black Night Tangerine Stripe for one parent and type Black Night h MP for the other. Choose **Use Black Night · Het Murphy Patternless** from the search; no optional settings are needed. MP means Murphy Patternless. The estimate gives **0% visual MP, 50% carriers and 50% non-carriers**, assuming the first parent does not carry MP. This pairing is also in the examples menu. You can enter other combinations directly; ambiguous codes and missing possible-het probabilities open a review instead of guessing.
 
 Choose **Sunglow × SHTCT** from the example menu to explore the effect of Tremper carrier status:
 
@@ -43,6 +45,8 @@ The examples menu includes source-linked cases from [HypeGecko](https://www.hype
 - **Wachi WB7439:** TUG Snow × TUG Snow under an explicitly stated one-copy dominant scenario.
 
 The [full marketplace audit](docs/MARKETPLACE_AUDIT.md) covers 223 product pages, 186 leopard geckos, all 110 recorded leopard-gecko parent pairs, and 5,760 male × female listing scenarios. An omitted probability, uncertain phenotype, trade name, or albino-line field is not converted into a confirmed gene. Other-species and non-animal listings are identified separately.
+
+The [Faunary description audit](docs/FAUNARY_AUDIT.md) reads all **1,398 full public descriptions** in the 9 November snapshot, including sales and auctions. It records morph, sire, dam and albino-line fields and links every listing. Faunary combinations appear in the parent search; wrong-category other-species records and bundles are identified separately. A source label is a naming example, not proof of your animal’s pedigree.
 
 ## Good genetics starts with good records
 

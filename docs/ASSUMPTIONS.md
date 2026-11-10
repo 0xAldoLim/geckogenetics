@@ -1,6 +1,6 @@
 # Calculation assumptions
 
-Reviewed 5 November 2026.
+Reviewed 9 November 2026.
 
 1. **The user supplies the evidence.** Entering a known genotype is an assertion based on records or an explicit scenario assumption. The app cannot verify an animal’s genotype. Educational presets are labeled as assumptions in their evidence notes.
 2. **Diploid, autosomal Mendelian inheritance.** Each parent contributes one allele per modeled locus. Genotypes are represented by 0, 1, or 2 variant copies; notation is scoped to its trait, not a molecular allele identifier.
@@ -21,3 +21,5 @@ Reviewed 5 November 2026.
 17. **Local storage limitations.** Storage can be disabled, full, cleared, or corrupted. Errors are shown; corrupt data is not silently overwritten. Share links contain entered notes. No remote storage or analytics is configured.
 
 18. **Marketplace records are examples.** Product text and last-slide card fields are breeder claims. Card identifiers that differ from listing identifiers are flagged in the audit. Line: Tremper/Bell is context, not a carrier assertion. Unresolved albino strains cannot be treated as absent under the unlisted-gene option. Oreo/Zulu inputs are excluded from the leopard-gecko model. Exact color, unverified project inheritance and undocumented joint carrier probabilities remain unresolved.
+
+19. **Faunary selections preserve qualifiers.** The dated source-label index comes from full public descriptions and titles, with each label interpreted by the shared resolver. Direct selection is offered only when its meaning is explicit and consistent; uncertain probabilities, strain, dosage, codes and conflicts remain in review. A confirmed visual component or confirmed carrier entry is not downgraded by a broader possible-combination claim. Unknown project codes assign no alleles, and bundles do not merge multiple animals into one genotype. MP is Murphy Patternless; h MP, ph MP and visual MP are distinct states.

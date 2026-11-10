@@ -63,11 +63,13 @@ export default function Encyclopedia({
           ? m.category === 'unverified'
           : source === 'marketplace'
             ? m.refs?.some((id) =>
-                /morphmarket\.com|hypegecko\.com|wachigecko\.com/.test(
+                /morphmarket\.com|hypegecko\.com|wachigecko\.com|faunary\.id/.test(
                   references[id].url,
                 ),
               )
-            : m.refs?.includes('london')),
+            : source === 'faunary'
+              ? m.refs?.includes('faunary')
+              : m.refs?.includes('london')),
     )
   return (
     <section className="encyclopedia">
@@ -123,12 +125,13 @@ export default function Encyclopedia({
           <option value="all">All sources</option>
           <option value="london">London masterlist</option>
           <option value="marketplace">Marketplace records</option>
+          <option value="faunary">Faunary descriptions</option>
           <option value="unverified">Unverified names</option>
         </select>
       </div>
       <p className="small muted">
         Showing {Math.min(limit, entries.length)} of {entries.length} matches ·{' '}
-        {morphs.length} total catalog entries · Reviewed 5 November 2026.
+        {morphs.length} total catalog entries · Reviewed 9 November 2026.
       </p>
       <p className="catalog-note">
         A growing index of genes, patterns, eye traits, breeding lines, and

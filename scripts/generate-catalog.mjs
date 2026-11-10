@@ -15,7 +15,7 @@ try {
     String(value).replaceAll('|', '\\|').replaceAll('\n', ' ')
   const header = `# Genetics references and morph catalog
 
-Reviewed **5 November 2026**. This catalog has **${morphs.length} entries**, including named breeding lines, descriptive appearances, and combination morphs. It does not claim exhaustive coverage of every trade name on the web. The calculation model covers **nine locus definitions**; catalog inclusion is not molecular confirmation or permission to assume independent inheritance. Mack Snow and TUG Snow are never combined as independent snow loci in a prediction.
+Reviewed **9 November 2026**. This catalog has **${morphs.length} entries**, including named breeding lines, descriptive appearances, and combination morphs. It does not claim exhaustive coverage of every trade name on the web. The calculation model covers **nine locus definitions**; catalog inclusion is not molecular confirmation or permission to assume independent inheritance. Mack Snow and TUG Snow are never combined as independent snow loci in a prediction.
 
 ## Research method and access limitations
 
@@ -40,6 +40,10 @@ Pied is recorded as a pattern descriptor; a cited Pied Galaxy listing separately
 ## November 2026 shop audit
 
 Opened all 223 catalog product pages across HypeGecko and Wachi, including 112 Wachi last-slide genetics cards. See [the complete listing audit](MARKETPLACE_AUDIT.md) for URLs, literal morph/sire/dam fields, exclusions and compatibility results. Seller labels are claims, not verified genotypes. Dotted hets, compact Snow aliases and compound hets are parsed in source order. Possible-het probabilities, uncertain visuals and dominant dosage remain explicit review choices. Line: Tremper alone assigns no Tremper alleles.
+
+## Faunary description index
+
+Read the complete public descriptions of all 1,398 leopard-gecko-category listings in the 9 November snapshot, including sales and auctions. [The Faunary audit](FAUNARY_AUDIT.md) links every listing and preserves morph, sire/dam and albino-line fields. The parent search also includes 1,682 source-label variants; these combinations and aliases are not independent genes. MP remains Murphy Patternless. Missing probabilities, strain, dominant dosage and ambiguous codes require review; family/project names do not invent genes. Wrong-category other-species records and multi-animal bundles are recorded separately.
 
 ## Locus and allele relationships
 
@@ -108,7 +112,7 @@ All entries use the review date above. Source titles below include publication d
     Object.values(references)
       .map(
         (r) =>
-          `- [${r.title}](${r.url}) — consulted or indexed as qualified above; catalog reviewed 5 November 2026.`,
+          `- [${r.title}](${r.url}) — consulted or indexed as qualified above; catalog reviewed 9 November 2026.`,
       )
       .join('\n')
   await mkdir('docs', { recursive: true })
